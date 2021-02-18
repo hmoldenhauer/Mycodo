@@ -753,7 +753,7 @@ def setup_scd30():
             flash("Error while setting resolution of sensor with ID {id}: "
                   "{err}".format(id=form_ds.device_id.data, err=msg), "error")
 
-    return render_template('tools/calibration_options/scd30.html'),
+    return render_template('tools/calibration_options/scd30.html',
                            ds_inputs=ds_inputs,
                            form_ds=form_ds,
                            inputs=inputs)
