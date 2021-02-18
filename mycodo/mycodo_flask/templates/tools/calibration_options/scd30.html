@@ -21,7 +21,7 @@
     <div class="row align-items-end small-gutters">
       <div class="col-auto">
         <div>
-          <select class="selectpicker" id="device_id" name="device_id" title="" data-original-title="{{_('Select which SCD30 to calibrate')}}">
+          <select class="selectpicker" id="selected_input_id" name="selected_input_id" title="" data-original-title="{{_('Select which SCD30 to calibrate')}}">
           {% if input %}
             {% for each_input in input %}
               <option value="{{each_input.unique_id}}">{{each_input.id}}: {{each_input.name}}</option>
