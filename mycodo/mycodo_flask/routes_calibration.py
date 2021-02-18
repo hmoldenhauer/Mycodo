@@ -719,12 +719,11 @@ def setup_scd30():
             for each_input in list_inputs_sorted:
                 if selected_input.device == each_input[0]:
                     input_device_name = each_input[1]
-        """
-        atlas_command = AtlasScientificCommand(selected_input)
-        return_status, return_string = atlas_command.send_command('Cal')
-        if return_status:
-            complete_with_error = return_string
-        """
+
+        from scd30_i2c import SCD30
+        scd30 = SCD30()
+        co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
+
         ui_stage = 'complete'
 
     return render_template('tools/calibration_options/scd30.html',
@@ -733,7 +732,8 @@ def setup_scd30():
                            input=input_dev,
                            input_device_name=input_device_name,
                            selected_input=selected_input,
-                           ui_stage=ui_stage)
+                           ui_stage=ui_stage,
+                           temperature=temp_celsius)
 #
 # Functions
 #

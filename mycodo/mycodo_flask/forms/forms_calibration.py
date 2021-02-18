@@ -103,3 +103,4 @@ class SetupSCD30(FlaskForm):
     hidden_input_id = StringField('Input ID', widget=widgets.HiddenInput())
     selected_input_id = StringField(lazy_gettext('SCD30 Sensor'))
     start_calibration = SubmitField(lazy_gettext('Begin Calibration'))
+    temperature = DecimalField(lazy_gettext('Temperature'))
