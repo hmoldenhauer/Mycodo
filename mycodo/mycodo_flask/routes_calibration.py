@@ -684,13 +684,13 @@ def setup_scd30():
     if not utils_general.user_has_permission('edit_settings'):
         return redirect(url_for('routes_general.home'))
 
-    form_ds = forms_calibration.SetupSCD30()
+    form_scd30 = forms_calibration.SetupSCD30()
 
     inputs = Input.query.all()
 
-    # Check if w1thermsensor library is installed
+    # Check if scd30_i2c library is installed
     if not current_app.config['TESTING']:
-        dep_unmet, _ = return_dependencies('CALIBRATE_DS_TYPE')
+        dep_unmet, _ = return_dependencies('CALIBRATE_SCD30')
         if dep_unmet:
             list_unmet_deps = []
             for each_dep in dep_unmet:
@@ -699,30 +699,30 @@ def setup_scd30():
                   "dependencies: {dep}".format(
                     dep=', '.join(list_unmet_deps)), 'error')
             return redirect(url_for('routes_admin.admin_dependencies',
-                                    device='CALIBRATE_DS_TYPE'))
+                                    device='CALIBRATE_SCD30'))
 
-    # If DS inputs exist, compile a list of detected inputs
-    ds_inputs = []
+    # If SCD30 inputs exist, compile a list of detected inputs
+    scd30_inputs = []
     try:
-        if os.path.isdir(PATH_1WIRE):
-            for each_name in os.listdir(PATH_1WIRE):
+        if os.path.isdir(PATH_I2C):
+            for each_name in os.listdir(PATH_I2C):
                 if 'bus' not in each_name:
                     input_dev = Input.query.filter(
                         Input.location == each_name).first()
                     if input_dev:
-                        ds_inputs.append((input_dev.device, each_name))
+                        scd30_inputs.append((input_dev.device, each_name))
     except OSError:
-        flash("Unable to detect 1-wire devices in '/sys/bus/w1/devices'. "
-              "Make 1-wire support is enabled with 'sudo raspi-config'.",
+        flash("Unable to detect I2C devices in '/sys/bus/w1/devices'. "
+              "Make I2C support is enabled with 'sudo raspi-config'.",
               "error")
 
     if (not current_app.config['TESTING'] and
-            form_ds.set_resolution.data and
-            form_ds.device_id.data):
+            form_scd30.set_resolution.data and
+            form_scd30.device_id.data):
         try:
             from w1thermsensor import W1ThermSensor
-            device_name = form_ds.device_id.data.split(',')[0]
-            device_id = form_ds.device_id.data.split(',')[1]
+            device_name = form_scd30.device_id.data.split(',')[0]
+            device_id = form_scd30.device_id.data.split(',')[1]
             input_type = None
             if device_name == 'DS18B20':
                 input_type = W1ThermSensor.THERM_SENSOR_DS18B20
@@ -744,18 +744,18 @@ def setup_scd30():
                 sensor = W1ThermSensor(
                     sensor_type=input_type, sensor_id=device_id)
                 sensor.set_resolution(
-                    form_ds.set_resolution.data, persist=True)
+                    form_scd30.set_resolution.data, persist=True)
             flash("Successfully set sensor {id} resolution to "
-                  "{bit}-bit".format(id=form_ds.device_id.data,
-                                     bit=form_ds.set_resolution.data),
+                  "{bit}-bit".format(id=form_scd30.device_id.data,
+                                     bit=form_scd30.set_resolution.data),
                   "success")
         except Exception as msg:
             flash("Error while setting resolution of sensor with ID {id}: "
-                  "{err}".format(id=form_ds.device_id.data, err=msg), "error")
+                  "{err}".format(id=form_scd30.device_id.data, err=msg), "error")
 
     return render_template('tools/calibration_options/scd30.html',
-                           ds_inputs=ds_inputs,
-                           form_ds=form_ds,
+                           scd30_inputs=scd30_inputs,
+                           form_scd30=form_scd30,
                            inputs=inputs)
 #
 # Functions

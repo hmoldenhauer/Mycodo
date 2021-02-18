@@ -443,6 +443,15 @@ CALIBRATION_INFO = {
         'dependencies_module': [
             ('pip-pypi', 'w1thermsensor', 'w1thermsensor')
         ]
+    },
+    'CALIBRATE_SCD30': {
+        'name': "{}: {}: {}".format(
+            lazy_gettext('Calibration'),
+            lazy_gettext('Sensor'),
+            lazy_gettext('SCD30')),
+        'dependencies_module': [
+            ('pip-pypi', 'scd30_i2c')
+        ]
     }
 }
 
@@ -781,7 +790,7 @@ CALIBRATION_DEVICES = [
     ('setup_atlas_ph', 'Atlas Scientific pH Sensor'),
     ('setup_atlas_rgb', 'Atlas Scientific RGB Sensor'),
     ('setup_ds_resolution', 'DS-Type Temperature Sensors (e.g. DS18B20)'),
-    ('setup_scd30', 'Sensirion SCD30 CO2, Humidity and Temperature Sensor Module')
+    ('setup_scd30', 'Sensirion SCD30 Sensor Module')
 ]
 
 # User Roles
