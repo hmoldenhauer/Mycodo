@@ -677,7 +677,7 @@ def setup_ds_resolution():
 
 @blueprint.route('/setup_scd30', methods=('GET', 'POST'))
 @flask_login.login_required
-def setup_scd30(input_id):
+def setup_scd30():
     """
     Setup Sensirion SCD30 CO2, Humidity and Temperature Sensor
     """
