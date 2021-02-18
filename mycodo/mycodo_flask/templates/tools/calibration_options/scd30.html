@@ -13,16 +13,16 @@
 
   <h2>Sensirion SCD30 Setup</h2>
 
-  <p>Set the temperature offset of the Sensirion SCD30 sensor. This setting will be written to the EEPROM to allow persistence after power loss. The EEPROM has a limited amount of writes (>50k).</p>
+  <p>Set the temperature offset and measurement interval of the Sensirion SCD30 sensor. This setting will be written to the EEPROM to allow persistence after power loss. The EEPROM has a limited amount of writes (>50k).</p>
 
     <form method="post" action="/setup_scd30">
     <div class="row align-items-end small-gutters">
       <div class="col-auto">
-        {{form_ds.device_id.label(class_='control-label')}}
+        {{form_scd30.device_id.label(class_='control-label')}}
         <div>
           <select class="selectpicker" id="device_id" name="device_id" title="" data-original-title="{{_('Select a DS18B20 sensor')}}">
-          {% if ds_inputs %}
-            {% for each_ds in ds_inputs %}
+          {% if scd30_inputs %}
+            {% for each_ds in scd30_inputs %}
               <option value="{{each_ds[0]}},{{each_ds[1]}}">{{each_ds[0]}}: {{each_ds[1]}}</option>
             {% endfor %}
           {% else %}
@@ -32,7 +32,7 @@
         </div>
       </div>
       <div class="col-auto">
-        {{form_ds.resolution.label(class_='control-label')}}
+        {{form_scd30.resolution.label(class_='control-label')}}
         <div>
           <select class="selectpicker" id="resolution" name="resolution" title="" data-original-title="{{_('Select a resolution')}}">
             <option value="9">9-bit, 0.5 °C, 93.75 ms</option>
@@ -43,7 +43,7 @@
         </div>
       </div>
       <div class="col-auto">
-        {{form_ds.set_resolution(class_='form-control btn btn-primary')}}
+        {{form_scd30.set_resolution(class_='form-control btn btn-primary')}}
       </div>
     </div>
     </form>
