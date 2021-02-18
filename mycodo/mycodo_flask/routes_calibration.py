@@ -705,6 +705,9 @@ def setup_scd30():
     selected_input = None
     input_device_name = None
     complete_with_error = None
+    co2_ppm = 0
+    temp_celsius = 0
+    rh_percent = 0
 
     # Begin calibration from selected input
     if form_scd30.start_calibration.data:
