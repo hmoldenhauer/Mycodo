@@ -675,6 +675,88 @@ def setup_ds_resolution():
                            inputs=inputs)
 
 
+@blueprint.route('/setup_scd30', methods=('GET', 'POST'))
+@flask_login.login_required
+def setup_ds_resolution():
+    """
+    Setup Sensirion SCD30 CO2, Humidity and Temperature Sensor
+    """
+    if not utils_general.user_has_permission('edit_settings'):
+        return redirect(url_for('routes_general.home'))
+
+    form_ds = forms_calibration.SetupSCD30()
+
+    inputs = Input.query.all()
+
+    # Check if w1thermsensor library is installed
+    if not current_app.config['TESTING']:
+        dep_unmet, _ = return_dependencies('CALIBRATE_DS_TYPE')
+        if dep_unmet:
+            list_unmet_deps = []
+            for each_dep in dep_unmet:
+                list_unmet_deps.append(each_dep[0])
+            flash("The device you're trying to calibrate has unmet "
+                  "dependencies: {dep}".format(
+                    dep=', '.join(list_unmet_deps)), 'error')
+            return redirect(url_for('routes_admin.admin_dependencies',
+                                    device='CALIBRATE_DS_TYPE'))
+
+    # If DS inputs exist, compile a list of detected inputs
+    ds_inputs = []
+    try:
+        if os.path.isdir(PATH_1WIRE):
+            for each_name in os.listdir(PATH_1WIRE):
+                if 'bus' not in each_name:
+                    input_dev = Input.query.filter(
+                        Input.location == each_name).first()
+                    if input_dev:
+                        ds_inputs.append((input_dev.device, each_name))
+    except OSError:
+        flash("Unable to detect 1-wire devices in '/sys/bus/w1/devices'. "
+              "Make 1-wire support is enabled with 'sudo raspi-config'.",
+              "error")
+
+    if (not current_app.config['TESTING'] and
+            form_ds.set_resolution.data and
+            form_ds.device_id.data):
+        try:
+            from w1thermsensor import W1ThermSensor
+            device_name = form_ds.device_id.data.split(',')[0]
+            device_id = form_ds.device_id.data.split(',')[1]
+            input_type = None
+            if device_name == 'DS18B20':
+                input_type = W1ThermSensor.THERM_SENSOR_DS18B20
+            if device_name == 'DS18S20':
+                input_type = W1ThermSensor.THERM_SENSOR_DS18S20
+            if device_name == 'DS1822':
+                input_type = W1ThermSensor.THERM_SENSOR_DS1822
+            if device_name == 'DS28EA00':
+                input_type = W1ThermSensor.THERM_SENSOR_DS28EA00
+            if device_name == 'DS1825':
+                input_type = W1ThermSensor.THERM_SENSOR_DS1825
+            if device_name == 'MAX31850K':
+                input_type = W1ThermSensor.THERM_SENSOR_MAX31850K
+            else:
+                flash("Unknown input type: {}".format(device_name),
+                      "error")
+
+            if input_type:
+                sensor = W1ThermSensor(
+                    sensor_type=input_type, sensor_id=device_id)
+                sensor.set_resolution(
+                    form_ds.set_resolution.data, persist=True)
+            flash("Successfully set sensor {id} resolution to "
+                  "{bit}-bit".format(id=form_ds.device_id.data,
+                                     bit=form_ds.set_resolution.data),
+                  "success")
+        except Exception as msg:
+            flash("Error while setting resolution of sensor with ID {id}: "
+                  "{err}".format(id=form_ds.device_id.data, err=msg), "error")
+
+    return render_template('tools/calibration_options/ds_resolution.html',
+                           ds_inputs=ds_inputs,
+                           form_ds=form_ds,
+                           inputs=inputs)
 #
 # Functions
 #
