@@ -97,6 +97,7 @@ class SetupDS18B20(FlaskForm):
         lazy_gettext('Resolution'), widget=NumberInput())
     set_resolution = SubmitField(lazy_gettext('Set Resolution'))
 
+
 # Sensirion SCD30 CO2, Humidity and Temperature Sensor
 class SetupSCD30(FlaskForm):
     device_id = StringField(lazy_gettext('Device'))
