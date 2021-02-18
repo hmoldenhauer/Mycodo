@@ -677,7 +677,7 @@ def setup_ds_resolution():
 
 @blueprint.route('/setup_scd30', methods=('GET', 'POST'))
 @flask_login.login_required
-def setup_ds_resolution():
+def setup_scd30():
     """
     Setup Sensirion SCD30 CO2, Humidity and Temperature Sensor
     """
@@ -753,7 +753,7 @@ def setup_ds_resolution():
             flash("Error while setting resolution of sensor with ID {id}: "
                   "{err}".format(id=form_ds.device_id.data, err=msg), "error")
 
-    return render_template('tools/calibration_options/ds_resolution.html',
+    return render_template('tools/calibration_options/scd30.html'),
                            ds_inputs=ds_inputs,
                            form_ds=form_ds,
                            inputs=inputs)
