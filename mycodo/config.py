@@ -781,6 +781,7 @@ CALIBRATION_DEVICES = [
     ('setup_atlas_ph', 'Atlas Scientific pH Sensor'),
     ('setup_atlas_rgb', 'Atlas Scientific RGB Sensor'),
     ('setup_ds_resolution', 'DS-Type Temperature Sensors (e.g. DS18B20)')
+    ('setup_scd30', 'Sensirion SCD30 CO2, Humidity and Temperature Sensor Module')
 ]
 
 # User Roles
