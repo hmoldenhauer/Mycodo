@@ -13,6 +13,8 @@
 
   <h2>Sensirion SCD30 Setup</h2>
 
+  {% if ui_stage == 'start' %}
+
   <p>Set the temperature offset and measurement interval of the Sensirion SCD30 sensor. This setting will be written to the EEPROM to allow persistence after power loss. The EEPROM has a limited amount of writes (>50k).</p>
 
     <form method="post" action="/setup_scd30">
@@ -20,10 +22,10 @@
       <div class="col-auto">
         {{form_scd30.device_id.label(class_='control-label')}}
         <div>
-          <select class="selectpicker" id="device_id" name="device_id" title="" data-original-title="{{_('Select a DS18B20 sensor')}}">
-          {% if scd30_inputs %}
-            {% for each_ds in scd30_inputs %}
-              <option value="{{each_ds[0]}},{{each_ds[1]}}">{{each_ds[0]}}: {{each_ds[1]}}</option>
+          <select class="selectpicker" id="device_id" name="device_id" title="" data-original-title="{{_('Select which SCD30 to calibrate')}}">
+          {% if input %}
+            {% for each_input in input %}
+              <option value="{{each_input.unique_id}}">{{each_input.id}}: {{each_input.name}}</option>
             {% endfor %}
           {% else %}
             <option value="">{{_('None Found')}}</option>
@@ -31,22 +33,27 @@
           </select>
         </div>
       </div>
-      <div class="col-auto">
-        {{form_scd30.resolution.label(class_='control-label')}}
-        <div>
-          <select class="selectpicker" id="resolution" name="resolution" title="" data-original-title="{{_('Select a resolution')}}">
-            <option value="9">9-bit, 0.5 °C, 93.75 ms</option>
-            <option value="10">10-bit, 0.25 °C, 187.5 ms</option>
-            <option value="11">11-bit, 0.125 °C, 375 ms</option>
-            <option value="12">12-bit, 0.0625 °C, 750 ms</option>
-          </select>
-        </div>
-      </div>
-      <div class="col-auto">
-        {{form_scd30.set_resolution(class_='form-control btn btn-primary')}}
+      <div class="col-auto small-gutters">
+        {{form_scd30.start_calibration(class_='form-control btn-default')}}
       </div>
     </div>
     </form>
+
+    {% elif ui_stage == 'complete' %}
+
+    <p>{{dict_translation['calibration']['title']}}{% if input_device_name %}: {{input_device_name}}{% endif %} {{selected_input.id}} ({{selected_input.name}}): {% if complete_with_error %}{{_('Calibration Failed')}}{% else %}{{_('Calibration Succeeded')}}{% endif %}</p>
+
+      {% if complete_with_error %}
+    <p>
+      {{dict_translation['error']['title']}}:
+      <br>{{complete_with_error}}
+    </p>
+    <p>{{_('Refer to the logs for details')}}</p>
+      {% else %}
+    <p>{{_('Calibration Complete')}}</p>
+      {% endif %}
+
+    {% endif %}
 
   </div>
 
