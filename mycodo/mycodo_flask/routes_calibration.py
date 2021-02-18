@@ -726,7 +726,8 @@ def setup_scd30():
         from scd30_i2c import SCD30
         scd30 = SCD30()
         co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
-
+        flash('The current temperature is: {} °C'.format(
+            temp_celsius), 'success')
         ui_stage = 'complete'
 
     return render_template('tools/calibration_options/scd30.html',
