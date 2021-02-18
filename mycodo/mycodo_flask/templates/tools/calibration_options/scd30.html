@@ -20,7 +20,6 @@
     <form method="post" action="/setup_scd30">
     <div class="row align-items-end small-gutters">
       <div class="col-auto">
-        {{form_scd30.device_id.label(class_='control-label')}}
         <div>
           <select class="selectpicker" id="device_id" name="device_id" title="" data-original-title="{{_('Select which SCD30 to calibrate')}}">
           {% if input %}
