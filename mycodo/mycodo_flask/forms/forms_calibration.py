@@ -100,7 +100,6 @@ class SetupDS18B20(FlaskForm):
 
 # Sensirion SCD30 CO2, Humidity and Temperature Sensor
 class SetupSCD30(FlaskForm):
-    device_id = StringField(lazy_gettext('Device'))
-    resolution = IntegerField(
-        lazy_gettext('Resolution'), widget=NumberInput())
-    set_resolution = SubmitField(lazy_gettext('Set Resolution'))
+    hidden_input_id = StringField('Input ID', widget=widgets.HiddenInput())
+    selected_input_id = StringField(lazy_gettext('SCD30 Sensor'))
+    start_calibration = SubmitField(lazy_gettext('Begin Calibration'))

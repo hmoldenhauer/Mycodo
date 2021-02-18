@@ -686,7 +686,7 @@ def setup_scd30():
 
     form_scd30 = forms_calibration.SetupSCD30()
 
-    inputs = Input.query.all()
+    input_dev = Input.query.filter(Input.device == 'SCD30').all()
 
     # Check if scd30_i2c library is installed
     if not current_app.config['TESTING']:
@@ -701,63 +701,39 @@ def setup_scd30():
             return redirect(url_for('routes_admin.admin_dependencies',
                                     device='CALIBRATE_SCD30'))
 
-    # If SCD30 inputs exist, compile a list of detected inputs
-    scd30_inputs = []
-    """
-    try:
-        if os.path.isdir(PATH_I2C):
-            for each_name in os.listdir(PATH_I2C):
-                if 'bus' not in each_name:
-                    input_dev = Input.query.filter(
-                        Input.location == each_name).first()
-                    if input_dev:
-                        scd30_inputs.append((input_dev.device, each_name))
-    except OSError:
-        flash("Unable to detect I2C devices in '/sys/bus/w1/devices'. "
-              "Make I2C support is enabled with 'sudo raspi-config'.",
-              "error")
+    ui_stage = 'start'
+    selected_input = None
+    input_device_name = None
+    complete_with_error = None
 
-    if (not current_app.config['TESTING'] and
-            form_scd30.set_resolution.data and
-            form_scd30.device_id.data):
-        try:
-            from w1thermsensor import W1ThermSensor
-            device_name = form_scd30.device_id.data.split(',')[0]
-            device_id = form_scd30.device_id.data.split(',')[1]
-            input_type = None
-            if device_name == 'DS18B20':
-                input_type = W1ThermSensor.THERM_SENSOR_DS18B20
-            if device_name == 'DS18S20':
-                input_type = W1ThermSensor.THERM_SENSOR_DS18S20
-            if device_name == 'DS1822':
-                input_type = W1ThermSensor.THERM_SENSOR_DS1822
-            if device_name == 'DS28EA00':
-                input_type = W1ThermSensor.THERM_SENSOR_DS28EA00
-            if device_name == 'DS1825':
-                input_type = W1ThermSensor.THERM_SENSOR_DS1825
-            if device_name == 'MAX31850K':
-                input_type = W1ThermSensor.THERM_SENSOR_MAX31850K
-            else:
-                flash("Unknown input type: {}".format(device_name),
-                      "error")
+    # Begin calibration from selected input
+    if form_scd30.start_calibration.data:
+        selected_input = Input.query.filter_by(
+            unique_id=form_scd30.selected_input_id.data).first()
+        dict_inputs = parse_input_information()
+        list_inputs_sorted = generate_form_input_list(dict_inputs)
+        if not selected_input:
+            flash('Input not found: {}'.format(
+                form_scd30.selected_input_id.data), 'error')
+        else:
+            for each_input in list_inputs_sorted:
+                if selected_input.device == each_input[0]:
+                    input_device_name = each_input[1]
+        """
+        atlas_command = AtlasScientificCommand(selected_input)
+        return_status, return_string = atlas_command.send_command('Cal')
+        if return_status:
+            complete_with_error = return_string
+        """
+        ui_stage = 'complete'
 
-            if input_type:
-                sensor = W1ThermSensor(
-                    sensor_type=input_type, sensor_id=device_id)
-                sensor.set_resolution(
-                    form_scd30.set_resolution.data, persist=True)
-            flash("Successfully set sensor {id} resolution to "
-                  "{bit}-bit".format(id=form_scd30.device_id.data,
-                                     bit=form_scd30.set_resolution.data),
-                  "success")
-        except Exception as msg:
-            flash("Error while setting resolution of sensor with ID {id}: "
-                  "{err}".format(id=form_scd30.device_id.data, err=msg), "error")
-    """
     return render_template('tools/calibration_options/scd30.html',
-                           scd30_inputs=scd30_inputs,
+                           complete_with_error=complete_with_error,
                            form_scd30=form_scd30,
-                           inputs=inputs)
+                           input=input_dev,
+                           input_device_name=input_device_name,
+                           selected_input=selected_input,
+                           ui_stage=ui_stage)
 #
 # Functions
 #
