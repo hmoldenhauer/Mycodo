@@ -440,7 +440,7 @@ CALIBRATION_INFO = {
             lazy_gettext('Sensor'),
             lazy_gettext('SCD30')),
         'dependencies_module': [
-            ('pip-pypi', 'scd30_i2c')
+            ('pip-pypi', 'scd30_i2c', 'scd30_i2c')
         ]
     }
 }
