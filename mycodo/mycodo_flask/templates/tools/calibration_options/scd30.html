@@ -42,10 +42,6 @@
 
     <p>{{dict_translation['calibration']['title']}}{% if input_device_name %}: {{input_device_name}}{% endif %} {{selected_input.id}} ({{selected_input.name}}): {% if complete_with_error %}{{_('Calibration Failed')}}{% else %}{{_('Calibration Succeeded')}}{% endif %}</p>
 
-    <div class="col-auto" value="{{temperature}}">
-      {{form_scd30.temperature}}
-    </div>
-
       {% if complete_with_error %}
     <p>
       {{dict_translation['error']['title']}}:
