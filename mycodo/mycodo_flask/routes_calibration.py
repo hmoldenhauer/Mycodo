@@ -738,7 +738,8 @@ def setup_scd30():
                            input_device_name=input_device_name,
                            selected_input=selected_input,
                            ui_stage=ui_stage,
-                           temperature=temp_celsius)
+                           temperature=temp_celsius,
+                           temperature_offset=temp_offset)
 #
 # Functions
 #
