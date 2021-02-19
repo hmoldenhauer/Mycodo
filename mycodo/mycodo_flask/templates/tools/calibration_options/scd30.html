@@ -15,35 +15,34 @@
 
   {% if ui_stage == 'start' %}
 
-  <p>Set the temperature offset and measurement interval of the Sensirion SCD30 sensor. This setting will be written to the EEPROM to allow persistence after power loss. The EEPROM has a limited amount of writes (>50k).</p>
+  <p>Set the temperature offset and measurement interval of the Sensirion SCD30 sensor. This setting will be written to the Sensor. Be sure to deactivate the sensor prior to calibration.</p>
 
     <form method="post" action="/setup_scd30">
-    <div class="row align-items-end small-gutters">
+    <div class="row small-gutters">
       <div class="col-auto">
-        <div>
-          <select class="selectpicker" id="selected_input_id" name="selected_input_id" title="" data-original-title="{{_('Select which SCD30 to calibrate')}}">
-          {% if input %}
-            {% for each_input in input %}
-              <option value="{{each_input.unique_id}}">{{each_input.id}}: {{each_input.name}}</option>
-            {% endfor %}
-          {% else %}
-            <option value="">{{_('None Found')}}</option>
-          {% endif %}
-          </select>
-        </div>
+        Measured Temperature at SCD30:
       </div>
-      <div class="col-auto small-gutters">
-        {{form_scd30.start_calibration(class_='form-control btn-default')}}
+      <div class="col-auto">
+        {{'%0.2f'| format(temperature_scd30|float)}}°C
       </div>
     </div>
     <div class="row small-gutters">
-      <div class="col">
-        Measured Temperature at SCD30: {{'%0.2f'| format(temperature_scd30|float)}}°C
+      <div class="col-auto">
+        Current Temperature offset at SCD30:
+      </div>
+      <div class="col-auto">
+        {{'%0.2f'| format(temperature_offset|float)}}°C
       </div>
     </div>
     <div class="row small-gutters">
-      <div class="col">
-        Current Temperature offset at SCD30: {{'%0.2f'| format(temperature_offset|float)}}°C
+      <div class="col-auto">
+        Temperature measured with different device (in °C):
+      </div>
+      <div class="col-auto">
+        {{form_scd30.ambient_temperature(class='form-control')}}
+      </div>
+      <div class="col-auto">
+        {{form_scd30.calibrate_temperature(class_='form-control btn-default')}}
       </div>
     </div>
     </form>
