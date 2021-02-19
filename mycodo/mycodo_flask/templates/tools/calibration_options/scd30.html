@@ -32,18 +32,18 @@
           </select>
         </div>
       </div>
-      <div class="row small-gutters">
-        <div class="col">
-          Measured Temperature at SCD30: {{temperature}}
-        </div>
-      </div>
-      <div class="row small-gutters">
-        <div class="col">
-          Current Temperature offset at SCD30: {{temperature_offset}}
-        </div>
-      </div>
       <div class="col-auto small-gutters">
         {{form_scd30.start_calibration(class_='form-control btn-default')}}
+      </div>
+    </div>
+    <div class="row small-gutters">
+      <div class="col">
+        Measured Temperature at SCD30: {{'%0.2f'| format(temperature_scd30|float)}}°C
+      </div>
+    </div>
+    <div class="row small-gutters">
+      <div class="col">
+        Current Temperature offset at SCD30: {{'%0.2f'| format(temperature_offset|float)}}°C
       </div>
     </div>
     </form>
