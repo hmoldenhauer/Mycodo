@@ -102,5 +102,5 @@ class SetupDS18B20(FlaskForm):
 class SetupSCD30(FlaskForm):
     hidden_input_id = StringField('Input ID', widget=widgets.HiddenInput())
     calibrate_temperature = SubmitField(lazy_gettext('Calibrate Temperature'))
-    ambient_temperature = FloatField(
+    ambient_temperature = DecimalField(
         lazy_gettext('Ambient Reference Temperature'), widget=NumberInput(step='any'))
