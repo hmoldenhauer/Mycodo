@@ -721,7 +721,7 @@ def setup_scd30():
         temp_offset = scd30.get_temperature_offset()
 
         flash("Successfully set new offest temperature to"
-              "{temp}".format(temp=t_offset_new),
+              "{temp}".format(temp=temp_offset_new),
               "success")
 
         #ui_stage = 'complete'
