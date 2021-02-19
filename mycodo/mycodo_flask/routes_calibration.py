@@ -716,7 +716,7 @@ def setup_scd30():
 
     # Begin calibration from selected input
     if form_scd30.calibrate_temperature.data:
-        temp_offset_new = temp_celsius - form_scd30.ambient_temperature.data
+        temp_offset_new = temp_celsius - float(form_scd30.ambient_temperature.data)
         co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
         temp_offset = scd30.get_temperature_offset()
 
