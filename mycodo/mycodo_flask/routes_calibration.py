@@ -709,6 +709,13 @@ def setup_scd30():
     temp_celsius = 0
     rh_percent = 0
 
+    from scd30_i2c import SCD30
+    scd30 = SCD30()
+    co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
+    temp_offset = scd30.get_temperature_offset()
+    flash('The current temperature offset is: {} °C'.format(
+        temp_offset), 'success')
+    """
     # Begin calibration from selected input
     if form_scd30.start_calibration.data:
         selected_input = Input.query.filter_by(
@@ -722,14 +729,8 @@ def setup_scd30():
             for each_input in list_inputs_sorted:
                 if selected_input.device == each_input[0]:
                     input_device_name = each_input[1]
-
-        from scd30_i2c import SCD30
-        scd30 = SCD30()
-        co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
-        temp_offset = scd30.get_temperature_offset()
-        flash('The current temperature offset is: {} °C'.format(
-            temp_offset), 'success')
-        ui_stage = 'complete'
+    """
+    ui_stage = 'complete'
 
     return render_template('tools/calibration_options/scd30.html',
                            complete_with_error=complete_with_error,
