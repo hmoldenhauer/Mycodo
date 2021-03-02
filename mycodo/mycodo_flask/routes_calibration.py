@@ -712,19 +712,20 @@ def setup_scd30():
     from scd30_i2c import SCD30
     scd30 = SCD30()
     co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
-    toff = scd30.get_temperature_offset()
+    t_off = scd30.get_temperature_offset()
 
     # Begin calibration from selected input
     if form_scd30.calibrate_temperature.data:
-        toffo = scd30.get_temperature_offset()
-        toffn = temp_celsius - float(form_scd30.ambient_temperature.data)
+        t_off_old = scd30.get_temperature_offset()
+        t_off_new = temp_celsius - float(form_scd30.ambient_temperature.data)
         co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
-        toff = scd30.get_temperature_offset()
-        scd30.set_temperature_offset(toffn)
+        t_off = scd30.get_temperature_offset()
+        scd30.set_temperature_offset(float(t_off_new))
 
-        flash(f"Successfully changed offest temperature from {toffo} to {toffn}",
-              "success"
-              )
+        flash(f"Successfully changed offest temperature from {round(t_off_old, 2)} \
+             to {round(t_off_new, 2)}",
+             "success"
+            )
 
         ui_stage = 'complete'
 
@@ -736,7 +737,7 @@ def setup_scd30():
                            selected_input=selected_input,
                            ui_stage=ui_stage,
                            temperature_scd30=temp_celsius,
-                           temperature_offset=toff)
+                           temperature_offset=t_off)
 #
 # Functions
 #
