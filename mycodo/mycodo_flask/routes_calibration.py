@@ -712,7 +712,7 @@ def setup_scd30():
     from scd30_i2c import SCD30
     scd30 = SCD30()
     co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
-    temp_offset = scd30.get_temperature_offset()
+    toff = scd30.get_temperature_offset()
 
     # Begin calibration from selected input
     if form_scd30.calibrate_temperature.data:
