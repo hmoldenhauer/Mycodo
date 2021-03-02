@@ -719,12 +719,13 @@ def setup_scd30():
         temp_offset_new = temp_celsius - float(form_scd30.ambient_temperature.data)
         co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
         temp_offset = scd30.get_temperature_offset()
+        scd30.set_temperature_offse(temp_offset_new)
 
-        flash("Successfully set new offest temperature to"
-              "{temp}".format(temp=temp_offset_new),
-              "success")
+        flash(f"Successfully changed offest temperature from {temp_offset} to {temp_offset_new}",
+              "success"
+              )
 
-        #ui_stage = 'complete'
+        ui_stage = 'complete'
 
     return render_template('tools/calibration_options/scd30.html',
                            complete_with_error=complete_with_error,
