@@ -722,10 +722,10 @@ def setup_scd30():
         t_off = scd30.get_temperature_offset()
         scd30.set_temperature_offset(float(t_off_new))
 
-        flash(f"Successfully changed offest temperature from {round(t_off_old, 2)}°C\
-             to {round(t_off_new, 2)}°C",
-             "success"
-            )
+        flash(f"Successfully changed offest temperature from {round(t_off_old, 2)}°C"
+              f"to {round(t_off_new, 2)}°C",
+              "success"
+             )
 
         ui_stage = 'complete'
 
