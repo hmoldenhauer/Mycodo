@@ -716,13 +716,13 @@ def setup_scd30():
 
     # Begin calibration from selected input
     if form_scd30.calibrate_temperature.data:
-        toff_old = scd30.get_temperature_offset()
-        toff_new = temp_celsius - float(form_scd30.ambient_temperature.data)
+        toffo = scd30.get_temperature_offset()
+        toffn = temp_celsius - float(form_scd30.ambient_temperature.data)
         co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
         toff = scd30.get_temperature_offset()
-        scd30.set_temperature_offset(toff_new)
+        scd30.set_temperature_offset(toffn)
 
-        flash(f"Successfully changed offest temperature from {toff_old} to {toff_new}",
+        flash(f"Successfully changed offest temperature from {toffo} to {toffn}",
               "success"
               )
 
