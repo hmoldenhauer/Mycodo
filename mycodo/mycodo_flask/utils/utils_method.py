@@ -89,14 +89,14 @@ def validate_method_data(form_data, this_method):
                 return 0
         except Exception:
             pass
-        if (not form_data.duration.data or
-                not form_data.setpoint_start.data):
-            flash(gettext("Required: Duration, start setpoint"),
-                  "error")
+        if not form_data.duration.data:
+            flash(gettext("Required: Duration"), "error")
             return 1
-        if not is_positive_integer(form_data.duration.data):
-            flash(gettext("Required: Duration must be positive"),
-                  "error")
+        elif not is_positive_integer(form_data.duration.data):
+            flash(gettext("Required: Duration must be positive"), "error")
+            return 1
+        if form_data.setpoint_start.data is None:
+            flash(gettext("Required: Start Setpoint"), "error")
             return 1
 
 
@@ -279,6 +279,9 @@ def method_add(form_add_method):
                 add_method_data.duration_end = form_add_method.duration_end.data
             else:
                 add_method_data.duration_sec = form_add_method.duration.data
+
+        elif method.method_type == 'Cascade':
+            add_method_data.linked_method_id = form_add_method.linked_method_id.data
 
         add_method_data.setpoint_start = form_add_method.setpoint_start.data
         add_method_data.setpoint_end = form_add_method.setpoint_end.data

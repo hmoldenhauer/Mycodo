@@ -92,6 +92,7 @@ from mycodo.mycodo_flask.forms import forms_function
 from mycodo.mycodo_flask.forms import forms_input
 from mycodo.mycodo_flask.forms import forms_lcd
 from mycodo.mycodo_flask.forms import forms_math
+from mycodo.mycodo_flask.forms import forms_measurement
 from mycodo.mycodo_flask.forms import forms_misc
 from mycodo.mycodo_flask.forms import forms_notes
 from mycodo.mycodo_flask.forms import forms_output
@@ -108,6 +109,7 @@ from mycodo.mycodo_flask.utils import utils_general
 from mycodo.mycodo_flask.utils import utils_input
 from mycodo.mycodo_flask.utils import utils_lcd
 from mycodo.mycodo_flask.utils import utils_math
+from mycodo.mycodo_flask.utils import utils_measurement
 from mycodo.mycodo_flask.utils import utils_misc
 from mycodo.mycodo_flask.utils import utils_notes
 from mycodo.mycodo_flask.utils import utils_output
@@ -445,20 +447,23 @@ def page_export():
     form_export_influxdb = forms_misc.ExportInfluxdb()
     form_import_influxdb = forms_misc.ImportInfluxdb()
 
-    output = Output.query.all()
+    function = CustomController.query.all()
     input_dev = Input.query.all()
     math = Math.query.all()
+    output = Output.query.all()
 
     # Generate all measurement and units used
     dict_measurements = add_custom_measurements(Measurement.query.all())
     dict_units = add_custom_units(Unit.query.all())
 
-    choices_output = utils_general.choices_outputs(
-        output, dict_units, dict_measurements)
+    choices_function = utils_general.choices_functions(
+        function, dict_units, dict_measurements)
     choices_input = utils_general.choices_inputs(
         input_dev, dict_units, dict_measurements)
     choices_math = utils_general.choices_maths(
         math, dict_units, dict_measurements)
+    choices_output = utils_general.choices_outputs(
+        output, dict_units, dict_measurements)
 
     if request.method == 'POST':
         if not utils_general.user_has_permission('edit_controllers'):
@@ -521,9 +526,10 @@ def page_export():
                            form_export_settings=form_export_settings,
                            form_import_influxdb=form_import_influxdb,
                            form_import_settings=form_import_settings,
-                           choices_output=choices_output,
+                           choices_function=choices_function,
                            choices_input=choices_input,
-                           choices_math=choices_math)
+                           choices_math=choices_math,
+                           choices_output=choices_output)
 
 
 @blueprint.route('/save_dashboard_layout', methods=['POST'])
@@ -572,6 +578,7 @@ def page_dashboard(dashboard_id):
     """ Generate custom dashboard with various data """
     # Retrieve tables from SQL database
     camera = Camera.query.all()
+    function = CustomController.query.all()
     dashboard = Widget.query.all()
     input_dev = Input.query.all()
     device_measurements = DeviceMeasurements.query.all()
@@ -711,6 +718,8 @@ def page_dashboard(dashboard_id):
 
     # Retrieve all choices to populate form drop-down menu
     choices_camera = utils_general.choices_id_name(camera)
+    choices_function = utils_general.choices_functions(
+        function, dict_units, dict_measurements)
     choices_input = utils_general.choices_inputs(
         input_dev, dict_units, dict_measurements)
     choices_math = utils_general.choices_maths(
@@ -725,7 +734,7 @@ def page_dashboard(dashboard_id):
     choices_pid = utils_general.choices_pids(
         pid, dict_units, dict_measurements)
     choices_pid_devices = utils_general.choices_pids_devices(pid)
-    choices_note_tag = utils_general.choices_tags(tags)
+    choices_tag = utils_general.choices_tags(tags)
 
     device_measurements_dict = {}
     for meas in device_measurements:
@@ -733,12 +742,13 @@ def page_dashboard(dashboard_id):
 
     # Get what each measurement uses for a unit
     use_unit = utils_general.use_unit_generate(
-        device_measurements, input_dev, output, math)
+        device_measurements, input_dev, output, math, function)
 
     return render_template('pages/dashboard.html',
                            custom_options_values_widgets=custom_options_values_widgets,
                            custom_widget_variables=custom_widget_variables,
                            table_conversion=Conversion,
+                           table_function=CustomController,
                            table_widget=Widget,
                            table_input=Input,
                            table_math=Math,
@@ -746,6 +756,7 @@ def page_dashboard(dashboard_id):
                            table_pid=PID,
                            table_device_measurements=DeviceMeasurements,
                            choices_camera=choices_camera,
+                           choices_function=choices_function,
                            choices_input=choices_input,
                            choices_math=choices_math,
                            choices_method=choices_method,
@@ -754,7 +765,7 @@ def page_dashboard(dashboard_id):
                            choices_output_pwm=choices_output_pwm,
                            choices_pid=choices_pid,
                            choices_pid_devices=choices_pid_devices,
-                           choices_note_tag=choices_note_tag,
+                           choices_tag=choices_tag,
                            dashboard=dashboard,
                            dashboard_id=dashboard_id,
                            device_measurements_dict=device_measurements_dict,
@@ -771,6 +782,7 @@ def page_dashboard(dashboard_id):
                            list_html_files_js_ready=list_html_files_js_ready,
                            list_html_files_js_ready_end=list_html_files_js_ready_end,
                            camera=camera,
+                           function=function,
                            math=math,
                            misc=misc,
                            pid=pid,
@@ -787,6 +799,7 @@ def page_dashboard(dashboard_id):
 @flask_login.login_required
 def page_graph_async():
     """ Generate graphs using asynchronous data retrieval """
+    function = CustomController.query.all()
     input_dev = Input.query.all()
     device_measurements = DeviceMeasurements.query.all()
     math = Math.query.all()
@@ -800,8 +813,10 @@ def page_graph_async():
 
     # Get what each measurement uses for a unit
     use_unit = utils_general.use_unit_generate(
-        device_measurements, input_dev, output, math)
+        device_measurements, input_dev, output, math, function)
 
+    choices_function = utils_general.choices_functions(
+        function, dict_units, dict_measurements)
     choices_input = utils_general.choices_inputs(
         input_dev, dict_units, dict_measurements)
     choices_math = utils_general.choices_maths(
@@ -867,11 +882,13 @@ def page_graph_async():
                            use_unit=use_unit,
                            input=input_dev,
                            math=math,
+                           function=function,
                            output=output,
                            pid=pid,
                            tag=tag,
                            choices_input=choices_input,
                            choices_math=choices_math,
+                           choices_function=choices_function,
                            choices_output=choices_output,
                            choices_pid=choices_pid,
                            choices_tag=choices_tag,
@@ -1129,24 +1146,30 @@ def page_lcd():
 def page_live():
     """ Page of recent and updating input data """
     # Get what each measurement uses for a unit
+    function = CustomController.query.all()
     device_measurements = DeviceMeasurements.query.all()
     input_dev = Input.query.all()
     output = Output.query.all()
     math = Math.query.all()
 
     activated_inputs = Input.query.filter(Input.is_activated).count()
-    activated_maths = Math.query.filter(Input.is_activated).count()
+    activated_functions = CustomController.query.filter(CustomController.is_activated).count()
 
     use_unit = utils_general.use_unit_generate(
-        device_measurements, input_dev, output, math)
+        device_measurements, input_dev, output, math, function)
 
     # Display orders
     display_order_input = csv_to_list_of_str(DisplayOrder.query.first().inputs)
-    display_order_math = csv_to_list_of_str(DisplayOrder.query.first().math)
+    display_order_function = csv_to_list_of_str(DisplayOrder.query.first().function)
 
     # Generate all measurement and units used
     dict_measurements = add_custom_measurements(Measurement.query.all())
     dict_units = add_custom_units(Unit.query.all())
+
+    dict_controllers = parse_function_information()
+
+    custom_options_values_controllers = parse_custom_option_values(
+        function, dict_controller=dict_controllers)
 
     dict_measure_measurements = {}
     dict_measure_units = {}
@@ -1159,18 +1182,19 @@ def page_live():
         dict_measure_units[each_measurement.unique_id] = unit
 
     return render_template('pages/live.html',
-                           activated_inputs=activated_inputs,
-                           activated_maths=activated_maths,
                            and_=and_,
+                           activated_inputs=activated_inputs,
+                           activated_functions=activated_functions,
+                           custom_options_values_controllers=custom_options_values_controllers,
                            table_device_measurements=DeviceMeasurements,
                            table_input=Input,
-                           table_math=Math,
+                           table_function=CustomController,
                            dict_measurements=dict_measurements,
                            dict_units=dict_units,
                            dict_measure_measurements=dict_measure_measurements,
                            dict_measure_units=dict_measure_units,
                            display_order_input=display_order_input,
-                           display_order_math=display_order_math,
+                           display_order_function=display_order_function,
                            list_devices_adc=list_analog_to_digital_converters(),
                            measurement_units=MEASUREMENTS,
                            use_unit=use_unit)
@@ -1268,24 +1292,27 @@ def page_function():
     camera = Camera.query.all()
     conditional = Conditional.query.all()
     conditional_conditions = ConditionalConditions.query.all()
-    custom_functions = CustomController.query.all()
+    function = CustomController.query.all()
     function_dev = Function.query.all()
     actions = Actions.query.all()
     input_dev = Input.query.all()
     lcd = LCD.query.all()
     math = Math.query.all()
+    measurement = Measurement.query.all()
     method = Method.query.all()
     tags = NoteTags.query.all()
     output = Output.query.all()
     output_channel = OutputChannel.query.all()
     pid = PID.query.all()
     trigger = Trigger.query.all()
+    unit = Unit.query.all()
     user = User.query.all()
 
     display_order_function = csv_to_list_of_str(DisplayOrder.query.first().function)
 
     form_base = forms_function.DataBase()
     form_add_function = forms_function.FunctionAdd()
+    form_mod_measurement = forms_measurement.MeasurementMod()
     form_mod_pid_base = forms_pid.PIDModBase()
     form_mod_pid_output_raise = forms_pid.PIDModRelayRaise()
     form_mod_pid_output_lower = forms_pid.PIDModRelayLower()
@@ -1295,11 +1322,11 @@ def page_function():
     form_mod_pid_value_lower = forms_pid.PIDModValueLower()
     form_mod_pid_volume_raise = forms_pid.PIDModVolumeRaise()
     form_mod_pid_volume_lower = forms_pid.PIDModVolumeLower()
-    form_function = forms_function.FunctionMod()
+    form_function_base = forms_function.FunctionMod()
     form_trigger = forms_trigger.Trigger()
     form_conditional = forms_conditional.Conditional()
     form_conditional_conditions = forms_conditional.ConditionalConditions()
-    form_custom_controller = forms_custom_controller.CustomController()
+    form_function = forms_custom_controller.CustomController()
     form_actions = forms_function.Actions()
 
     if request.method == 'POST':
@@ -1316,7 +1343,7 @@ def page_function():
                 mod_order.function,
                 [
                     conditional,
-                    custom_functions,
+                    function,
                     function_dev,
                     pid,
                     trigger
@@ -1328,21 +1355,21 @@ def page_function():
         elif form_add_function.func_add.data:
             unmet_dependencies = utils_function.function_add(
                 form_add_function)
-        elif form_function.save_function.data:
+        elif form_function_base.save_function.data:
             utils_function.function_mod(
                 form_conditional)
-        elif form_function.delete_function.data:
+        elif form_function_base.delete_function.data:
             utils_function.function_del(
                 form_conditional.function_id.data)
-        elif form_function.order_up.data:
+        elif form_function_base.order_up.data:
             utils_function.function_reorder(
                 form_conditional.function_id.data,
                 display_order_function, 'up')
-        elif form_function.order_down.data:
+        elif form_function_base.order_down.data:
             utils_function.function_reorder(
                 form_conditional.function_id.data,
                 display_order_function, 'down')
-        elif form_function.execute_all_actions.data:
+        elif form_function_base.execute_all_actions.data:
             utils_function.action_execute_all(form_conditional)
 
         # PID
@@ -1446,18 +1473,21 @@ def page_function():
             utils_function.action_del(form_actions)
 
         # Custom Functions
-        elif form_custom_controller.save_controller.data:
+        elif form_function.save_controller.data:
             utils_controller.controller_mod(
-                form_custom_controller, request.form)
-        elif form_custom_controller.delete_controller.data:
+                form_function, request.form)
+        elif form_function.delete_controller.data:
             utils_controller.controller_del(
-                form_custom_controller.function_id.data)
-        elif form_custom_controller.deactivate_controller.data:
+                form_function.function_id.data)
+        elif form_function.deactivate_controller.data:
             utils_controller.controller_deactivate(
-                form_custom_controller.function_id.data)
-        elif form_custom_controller.activate_controller.data:
+                form_function.function_id.data)
+        elif form_function.activate_controller.data:
             utils_controller.controller_activate(
-                form_custom_controller.function_id.data)
+                form_function.function_id.data)
+        elif form_mod_measurement.measurement_mod.data:
+            utils_measurement.measurement_mod(
+                form_mod_measurement, url_for('routes_page.page_function'))
 
         if unmet_dependencies:
             function_type = None
@@ -1481,7 +1511,7 @@ def page_function():
     dict_outputs = parse_output_information()
 
     custom_options_values_controllers = parse_custom_option_values(
-        custom_functions, dict_controller=dict_controllers)
+        function, dict_controller=dict_controllers)
 
     # Create lists of built-in and custom functions
     choices_functions = []
@@ -1493,6 +1523,8 @@ def page_function():
     # Sort combined list
     choices_functions_add = sorted(choices_functions_add, key=lambda i: i['item'])
 
+    choices_function = utils_general.choices_functions(
+        function, dict_units, dict_measurements)
     choices_input = utils_general.choices_inputs(
         input_dev, dict_units, dict_measurements)
     choices_input_devices = utils_general.choices_input_devices(input_dev)
@@ -1507,6 +1539,7 @@ def page_function():
         output, OutputChannel, dict_outputs, dict_units, dict_measurements)
     choices_pid = utils_general.choices_pids(
         pid, dict_units, dict_measurements)
+    choices_measurements_units = utils_general.choices_measurements_units(measurement, unit)
 
     choices_controller_ids = utils_general.choices_controller_ids()
 
@@ -1528,9 +1561,9 @@ def page_function():
             conditions_dict[each_condition.conditional_id] = True
 
     controllers = []
-    controllers_all = [('Conditional', conditional),
-                       ('Custom', custom_functions),
-                       ('Input', input_dev),
+    controllers_all = [('Input', input_dev),
+                       ('Conditional', conditional),
+                       ('Function', function),
                        ('LCD', lcd),
                        ('Math', math),
                        ('PID', pid),
@@ -1544,7 +1577,7 @@ def page_function():
 
     # Create dict of Function names
     names_function = {}
-    all_elements = [conditional, pid, trigger, function_dev, custom_functions]
+    all_elements = [conditional, pid, trigger, function_dev, function]
     for each_element in all_elements:
         for each_function in each_element:
             names_function[each_function.unique_id] = '[{id}] {name}'.format(
@@ -1591,29 +1624,20 @@ def page_function():
                 sunrise_set_calc[each_trigger.unique_id]['offset_sunrise'] = None
                 sunrise_set_calc[each_trigger.unique_id]['offset_sunset'] = None
 
-    # Get infrared remotes and codes
-    infrared_remotes = {}
-    try:
-        from py_irsend import irsend
-        for remote in irsend.list_remotes():
-            remote_str = remote.decode('utf-8')
-            infrared_remotes[remote_str] = irsend.list_codes(remote)
-            infrared_remotes[remote_str] = [
-                x.decode('utf-8') for x in infrared_remotes[remote_str]]
-    except:
-        pass
-
     return render_template('pages/function.html',
+                           and_=and_,
                            actions=actions,
                            actions_dict=actions_dict,
                            camera=camera,
                            choices_controller_ids=choices_controller_ids,
                            choices_custom_functions=choices_custom_functions,
+                           choices_function=choices_function,
                            choices_functions=choices_functions,
                            choices_functions_add=choices_functions_add,
                            choices_input=choices_input,
                            choices_input_devices=choices_input_devices,
                            choices_math=choices_math,
+                           choices_measurements_units=choices_measurements_units,
                            choices_method=choices_method,
                            choices_output=choices_output,
                            choices_output_channels=choices_output_channels,
@@ -1624,18 +1648,21 @@ def page_function():
                            conditional_conditions=conditional_conditions,
                            conditions_dict=conditions_dict,
                            controllers=controllers,
-                           custom_functions=custom_functions,
+                           function=function,
                            custom_options_values_controllers=custom_options_values_controllers,
                            dict_controllers=dict_controllers,
+                           dict_measurements=dict_measurements,
                            dict_outputs=dict_outputs,
+                           dict_units=dict_units,
                            display_order_function=display_order_function,
                            form_base=form_base,
                            form_conditional=form_conditional,
                            form_conditional_conditions=form_conditional_conditions,
-                           form_custom_controller=form_custom_controller,
+                           form_function=form_function,
                            form_actions=form_actions,
                            form_add_function=form_add_function,
-                           form_function=form_function,
+                           form_function_base=form_function_base,
+                           form_mod_measurement=form_mod_measurement,
                            form_mod_pid_base=form_mod_pid_base,
                            form_mod_pid_pwm_raise=form_mod_pid_pwm_raise,
                            form_mod_pid_pwm_lower=form_mod_pid_pwm_lower,
@@ -1649,7 +1676,6 @@ def page_function():
                            function_action_info=FUNCTION_ACTION_INFO,
                            function_dev=function_dev,
                            function_types=FUNCTIONS,
-                           infrared_remotes=infrared_remotes,
                            input=input_dev,
                            lcd=lcd,
                            math=math,
@@ -1659,6 +1685,8 @@ def page_function():
                            output_types=output_types(),
                            pid=pid,
                            sunrise_set_calc=sunrise_set_calc,
+                           table_conversion=Conversion,
+                           table_device_measurements=DeviceMeasurements,
                            table_input=Input,
                            table_output=Output,
                            tags=tags,
@@ -1672,6 +1700,7 @@ def page_function():
 def page_output():
     """ Display output status and config """
     camera = Camera.query.all()
+    function = CustomController.query.all()
     input_dev = Input.query.all()
     lcd = LCD.query.all()
     math = Math.query.all()
@@ -1723,6 +1752,8 @@ def page_output():
     dict_measurements = add_custom_measurements(Measurement.query.all())
     dict_units = add_custom_units(Unit.query.all())
 
+    choices_function = utils_general.choices_functions(
+        function, dict_units, dict_measurements)
     choices_input = utils_general.choices_inputs(
         input_dev, dict_units, dict_measurements)
     choices_input_devices = utils_general.choices_input_devices(input_dev)
@@ -1775,6 +1806,7 @@ def page_output():
 
     return render_template('pages/output.html',
                            camera=camera,
+                           choices_function=choices_function,
                            choices_input=choices_input,
                            choices_input_devices=choices_input_devices,
                            choices_math=choices_math,
@@ -1801,11 +1833,12 @@ def page_output():
                            user=user)
 
 
-@blueprint.route('/data', methods=('GET', 'POST'))
+@blueprint.route('/input', methods=('GET', 'POST'))
 @flask_login.login_required
-def page_data():
+def page_input():
     """ Display Data page """
 
+    function = CustomController.query.all()
     input_dev = Input.query.all()
     input_channel = InputChannel.query.all()
     math = Math.query.all()
@@ -1824,9 +1857,8 @@ def page_data():
 
     form_add_input = forms_input.InputAdd()
     form_mod_input = forms_input.InputMod()
-    form_mod_input_measurement = forms_input.InputMeasurementMod()
+    form_mod_measurement = forms_measurement.MeasurementMod()
 
-    form_add_math = forms_math.MathAdd()
     form_mod_math = forms_math.MathMod()
     form_mod_math_measurement = forms_math.MathMeasurementMod()
     form_mod_average_single = forms_math.MathModAverageSingle()
@@ -1846,7 +1878,7 @@ def page_data():
     if request.method == 'POST':
         unmet_dependencies = None
         if not utils_general.user_has_permission('edit_controllers'):
-            return redirect(url_for('routes_page.page_data'))
+            return redirect(url_for('routes_page.page_input'))
 
         # Reorder
         if form_base.reorder.data:
@@ -1871,8 +1903,9 @@ def page_data():
             unmet_dependencies = utils_input.input_add(form_add_input)
 
         # Mod Input Measurement
-        elif form_mod_input_measurement.input_measurement_mod.data:
-            utils_input.measurement_mod(form_mod_input_measurement)
+        elif form_mod_measurement.measurement_mod.data:
+            utils_measurement.measurement_mod(
+                form_mod_measurement, url_for('routes_page.page_input'))
 
         # Mod other Input settings
         elif form_mod_input.input_mod.data:
@@ -1889,10 +1922,6 @@ def page_data():
             utils_input.input_activate(form_mod_input)
         elif form_mod_input.input_deactivate.data:
             utils_input.input_deactivate(form_mod_input)
-
-        # Add Math
-        elif form_add_math.math_add.data:
-            unmet_dependencies = utils_math.math_add(form_add_math)
 
         # Mod Math Measurement
         elif form_mod_math_measurement.math_measurement_mod.data:
@@ -1942,7 +1971,7 @@ def page_data():
             return redirect(url_for('routes_admin.admin_dependencies',
                                     device=form_add_input.input_type.data.split(',')[0]))
         else:
-            return redirect(url_for('routes_page.page_data'))
+            return redirect(url_for('routes_page.page_input'))
 
     custom_options_values_inputs = parse_custom_option_values(
         input_dev, dict_controller=dict_inputs)
@@ -1958,6 +1987,8 @@ def page_data():
     dict_measurements = add_custom_measurements(measurement)
 
     # Create list of choices to be used in dropdown menus
+    choices_function = utils_general.choices_functions(
+        function, dict_units, dict_measurements)
     choices_input = utils_general.choices_inputs(
         input_dev, dict_units, dict_measurements)
     choices_math = utils_general.choices_maths(
@@ -2049,8 +2080,9 @@ def page_data():
                 ftdi_devices = get_ftdi_device_list()
                 break
 
-    return render_template('pages/data.html',
+    return render_template('pages/input.html',
                            and_=and_,
+                           choices_function=choices_function,
                            choices_input=choices_input,
                            choices_math=choices_math,
                            choices_output=choices_output,
@@ -2072,9 +2104,8 @@ def page_data():
                            display_order_math=display_order_math,
                            form_base=form_base,
                            form_add_input=form_add_input,
-                           form_add_math=form_add_math,
                            form_mod_input=form_mod_input,
-                           form_mod_input_measurement=form_mod_input_measurement,
+                           form_mod_measurement=form_mod_measurement,
                            form_mod_average_single=form_mod_average_single,
                            form_mod_sum_single=form_mod_sum_single,
                            form_mod_redundancy=form_mod_redundancy,
@@ -2135,6 +2166,7 @@ def page_usage():
 
     energy_usage = EnergyUsage.query.all()
     input_dev = Input.query.all()
+    function = CustomController.query.all()
     math = Math.query.all()
     misc = Misc.query.first()
     output = Output.query.all()
@@ -2144,6 +2176,8 @@ def page_usage():
     dict_measurements = add_custom_measurements(Measurement.query.all())
     dict_units = add_custom_units(Unit.query.all())
 
+    choices_function = utils_general.choices_functions(
+        function, dict_units, dict_measurements)
     choices_input = utils_general.choices_inputs(
         input_dev, dict_units, dict_measurements)
     choices_math = utils_general.choices_maths(
@@ -2193,6 +2227,7 @@ def page_usage():
 
     return render_template('pages/usage.html',
                            calculate_usage=calculate_usage,
+                           choices_function=choices_function,
                            choices_input=choices_input,
                            choices_math=choices_math,
                            custom_options_values_output_channels=custom_options_values_output_channels,

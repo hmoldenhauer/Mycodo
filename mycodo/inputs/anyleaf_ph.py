@@ -65,6 +65,7 @@ INPUT_INFORMATION = {
         #     'default_value': '',
         #     'options_select': [
         #         'Input',
+        #         'Function',
         #         'Math'
         #     ],
         #     'name': lazy_gettext('Temperature compensation source. Leave at `Select one` to use the onboard sensor.'),
@@ -169,6 +170,7 @@ and press `Calibrate, slot 2`. Optionally, repeat a third time with `Calibrate, 
         #     'default_value': '',
         #     'options_select': [
         #         'Input',
+        #         'Function',
         #         'Math'
         #     ],
         #     'name': lazy_gettext('Temperature Compensation Measurement'),
@@ -200,10 +202,9 @@ class InputModule(AbstractInput):
         # self.temperature_comp_meas_measurement_id = None
         # self.max_age = None
 
-        self.setup_custom_options(
-            INPUT_INFORMATION['custom_options'], input_dev)
-
         if not testing:
+            self.setup_custom_options(
+                INPUT_INFORMATION['custom_options'], input_dev)
             self.initialize_input()
 
     def initialize_input(self):

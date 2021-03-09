@@ -13,8 +13,8 @@ from flask_babel import lazy_gettext
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from config_translations import TRANSLATIONS
 
-MYCODO_VERSION = '8.8.8'
-ALEMBIC_VERSION = 'cc7261a89a87'
+MYCODO_VERSION = '8.9.0'
+ALEMBIC_VERSION = '24dbd0b8c8d1'
 
 #  FORCE_UPGRADE_MASTER
 #  Set True to enable upgrading to the master branch of the Mycodo repository.
@@ -319,21 +319,6 @@ MATH_INFO = {
     }
 }
 
-# Math form dropdown
-MATHS = [
-    ('average', MATH_INFO['average']['name']),
-    ('average_single', MATH_INFO['average_single']['name']),
-    ('sum', MATH_INFO['sum']['name']),
-    ('sum_single', MATH_INFO['sum_single']['name']),
-    ('difference', MATH_INFO['difference']['name']),
-    ('equation', MATH_INFO['equation']['name']),
-    ('redundancy', MATH_INFO['redundancy']['name']),
-    ('verification', MATH_INFO['verification']['name']),
-    ('statistics', MATH_INFO['statistics']['name']),
-    ('humidity', MATH_INFO['humidity']['name']),
-    ('vapor_pressure_deficit', MATH_INFO['vapor_pressure_deficit']['name'])
-]
-
 # Method info
 METHOD_INFO = {
     'Date': {
@@ -357,6 +342,10 @@ METHOD_INFO = {
         'dependencies_module': [
             ('apt', 'python3-numpy', 'python3-numpy')
         ]
+    },
+    'Cascade': {
+        'name': lazy_gettext('Method Cascade'),
+        'dependencies_module': []
     }
 }
 
@@ -366,7 +355,8 @@ METHODS = [
     ('Duration', METHOD_INFO['Duration']['name']),
     ('Daily', METHOD_INFO['Daily']['name']),
     ('DailySine', METHOD_INFO['DailySine']['name']),
-    ('DailyBezier', METHOD_INFO['DailyBezier']['name'])
+    ('DailyBezier', METHOD_INFO['DailyBezier']['name']),
+    ('Cascade', METHOD_INFO['Cascade']['name'])
 ]
 
 PID_INFO = {
@@ -483,27 +473,23 @@ CONDITIONAL_CONDITIONS = [
 
 FUNCTION_INFO = {
     'function_spacer': {
-        'name': '{}: {}'.format(
-            TRANSLATIONS['function']['title'],
-            lazy_gettext('Spacer')),
+        'name': lazy_gettext('Spacer'),
         'dependencies_module': []
     },
     'function_actions': {
-        'name': '{}: {}'.format(
-            TRANSLATIONS['function']['title'],
-            lazy_gettext('Execute Actions')),
+        'name': lazy_gettext('Execute Actions'),
         'dependencies_module': []
     },
     'conditional_conditional': {
-        'name': '{}: {}'.format(
-            TRANSLATIONS['controller']['title'],
-            TRANSLATIONS['conditional']['title']),
+        'name': '{} {}'.format(
+            TRANSLATIONS['conditional']['title'],
+            TRANSLATIONS['controller']['title']),
         'dependencies_module': []
     },
     'pid_pid': {
-        'name': '{}: {}'.format(
-            TRANSLATIONS['controller']['title'],
-            TRANSLATIONS['pid']['title']),
+        'name': '{} {}'.format(
+            TRANSLATIONS['pid']['title'],
+            TRANSLATIONS['controller']['title']),
         'dependencies_module': []
     },
     'trigger_edge': {
@@ -545,16 +531,6 @@ FUNCTION_INFO = {
             TRANSLATIONS['duration']['title']),
         'dependencies_module': []
     },
-    'trigger_infrared_remote_input': {
-        'name': '{}: {}'.format(
-            TRANSLATIONS['trigger']['title'],
-            lazy_gettext('Infrared Receive')),
-        'dependencies_module': [
-            ('apt', 'liblircclient-dev', 'liblircclient-dev'),
-            ('apt', 'lirc', 'lirc'),
-            ('pip-pypi', 'lirc', 'python-lirc')
-        ]
-    },
     'trigger_run_pwm_method': {
         'name': '{}: {}'.format(
             TRANSLATIONS['trigger']['title'],
@@ -580,7 +556,6 @@ FUNCTIONS = [
     ('trigger_timer_daily_time_point', FUNCTION_INFO['trigger_timer_daily_time_point']['name']),
     ('trigger_timer_daily_time_span', FUNCTION_INFO['trigger_timer_daily_time_span']['name']),
     ('trigger_timer_duration', FUNCTION_INFO['trigger_timer_duration']['name']),
-    ('trigger_infrared_remote_input', FUNCTION_INFO['trigger_infrared_remote_input']['name']),
     ('trigger_run_pwm_method', FUNCTION_INFO['trigger_run_pwm_method']['name']),
     ('trigger_sunrise_sunset', FUNCTION_INFO['trigger_sunrise_sunset']['name'])
 ]
@@ -637,15 +612,6 @@ FUNCTION_ACTION_INFO = {
         'name': "{}: {}".format(
             lazy_gettext('Execute Command'), lazy_gettext('Shell')),
         'dependencies_module': []
-    },
-    'infrared_send': {
-        'name': lazy_gettext('Infrared Send'),
-        'dependencies_module': [
-            ('apt', 'liblircclient-dev', 'liblircclient-dev'),
-            ('apt', 'lirc', 'lirc'),
-            ('pip-pypi', 'lirc', 'python-lirc'),
-            ('pip-pypi', 'py_irsend', 'py-irsend')
-        ]
     },
     'input_force_measurements': {
         'name': "{}: {}".format(
@@ -762,7 +728,6 @@ FUNCTION_ACTIONS = [
     ('photo_email', FUNCTION_ACTION_INFO['photo_email']['name']),
     ('video_email', FUNCTION_ACTION_INFO['video_email']['name']),
     ('command', FUNCTION_ACTION_INFO['command']['name']),
-    ('infrared_send', FUNCTION_ACTION_INFO['infrared_send']['name']),
     ('lcd_backlight_off', FUNCTION_ACTION_INFO['lcd_backlight_off']['name']),
     ('lcd_backlight_on', FUNCTION_ACTION_INFO['lcd_backlight_on']['name']),
     ('lcd_backlight_color', FUNCTION_ACTION_INFO['lcd_backlight_color']['name']),

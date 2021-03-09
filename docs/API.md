@@ -113,7 +113,7 @@ Activates a controller.
 
 Parameters:
 
--  **controller_type** - the type of controller being activated. Options are: "Conditional", "LCD", "Input", "Math", "Output", "PID", "Trigger", or "Custom".
+-  **controller_type** - the type of controller being activated. Options are: "Function", "LCD", "Input", "Math", "Output", "PID", "Trigger", or "Function".
 -  **controller_id** - the unique ID of the controller to activate.
 
 ### controller_deactivate()
@@ -124,7 +124,7 @@ Deactivates a controller.
 
 Parameters:
 
--  **controller_type** - the type of controller being deactivated. Options are: "Conditional", "LCD", "Input", "Math", "Output", "PID", "Trigger", or "Custom".
+-  **controller_type** - the type of controller being deactivated. Options are: "Conditional", "LCD", "Input", "Math", "Output", "PID", "Trigger", or "Function".
 -  **controller_id** - the unique ID of the controller to deactivate.
 
 ### get_condition_measurement()
@@ -364,16 +364,6 @@ Parameters:
 -  **recipients** - The email address (string) or addresses (list of strings) to send the email.
 -  **message** - The body of the email.
 -  **subject** - The subject of the email.
-
-### send_infrared_code_broadcast()
-
-**send_infrared_code_broadcast**\ (*code*)
-
-Send an infrared command code.
-
-Parameters:
-
--  **code** - The infrared code to send.
 
 ### terminate_daemon()
 

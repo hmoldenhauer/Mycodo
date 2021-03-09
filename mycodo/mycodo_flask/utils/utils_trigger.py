@@ -64,11 +64,6 @@ def trigger_mod(form):
             trigger.trigger_actions_at_start = form.trigger_actions_at_start.data
             trigger.trigger_actions_at_period = form.trigger_actions_at_period.data
 
-        elif trigger.trigger_type == 'trigger_infrared_remote_input':
-            error = check_form_infrared_remote_input(form, error)
-            trigger.program = form.program.data
-            trigger.word = form.word.data
-
         elif trigger.trigger_type == 'trigger_sunrise_sunset':
             error = check_form_sunrise_sunset(form, error)
             trigger.rise_or_set = form.rise_or_set.data
@@ -178,12 +173,6 @@ def trigger_activate(trigger_id):
     for each_action in actions.all():
         error = check_actions(each_action, error)
 
-    if mod_trigger.trigger_type == 'trigger_run_pwm_method':
-        mod_trigger_ready = Trigger.query.filter(
-            Trigger.unique_id == trigger_id).first()
-        mod_trigger_ready.method_start_time = 'Ready'
-        db.session.commit()
-
     if not error:
         controller_activate_deactivate(
             'activate',
@@ -205,6 +194,12 @@ def trigger_deactivate(trigger_id):
             'deactivate',
             'Trigger',
             trigger_id)
+
+        trigger = Trigger.query.filter(
+            Trigger.unique_id == trigger_id).first()
+        trigger.method_start_time = None
+        trigger.method_end_time = None
+        db.session.commit()
 
     flash_success_errors(error, action, url_for('routes_page.page_function'))
 
@@ -273,17 +268,6 @@ def check_form_run_pwm_method(form, error):
     if not form.unique_id_2.data:
         error.append("{id} must be set".format(
             id=form.unique_id_2.label.text))
-    return error
-
-
-def check_form_infrared_remote_input(form, error):
-    """Checks if the submitted form has any errors"""
-    if not form.program.data:
-        error.append("{id} must be set".format(
-            id=form.program.label.text))
-    if not form.word.data:
-        error.append("{id} must be set".format(
-            id=form.program.label.text))
     return error
 
 

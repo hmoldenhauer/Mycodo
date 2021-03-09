@@ -1,6 +1,6 @@
 # coding=utf-8
 #
-#  function_bang_bang.py - A hysteretic control
+#  bang_bang.py - A hysteretic control
 #
 #  Copyright (C) 2015-2020 Rob Bultman <rob@firstbuild.com>
 #
@@ -37,7 +37,7 @@ def constraints_pass_positive_value(mod_controller, value):
 
 FUNCTION_INFORMATION = {
     'function_name_unique': 'bang_bang',
-    'function_name': 'Function: Bang-Bang (Hysteretic) Control',
+    'function_name': 'Bang-Bang Hysteretic',
 
     'message': 'A simple bang-bang control for controlling one output from one input.'
         ' Select an input, an output, enter a setpoint and a hysteresis, and select a direction.'
@@ -130,6 +130,7 @@ class CustomModule(AbstractController, threading.Thread):
         self.timer = None
         self.control = DaemonControl()
         self.outputIsOn = False
+        self.timer_loop = time.time()
 
         # Initialize custom options
         self.measurement_device_id = None
@@ -192,8 +193,11 @@ class CustomModule(AbstractController, threading.Thread):
 
             # Start a loop
             while self.running:
-                self.loop()
-                time.sleep(self.update_period)
+                if self.timer_loop < time.time():
+                    while self.timer_loop < time.time():
+                        self.timer_loop += self.update_period
+                    self.loop()
+                time.sleep(0.1)
         except:
             self.logger.exception("Run Error")
         finally:
@@ -220,8 +224,7 @@ class CustomModule(AbstractController, threading.Thread):
                 if last_measurement > (self.setpoint + self.hysteresis):
                     self.control.output_off(
                         self.output_device_id,
-                        output_channel=self.output_channel,
-                        )
+                        output_channel=self.output_channel)
             else:
                 # looking to turn output on
                 if last_measurement < (self.setpoint - self.hysteresis):
@@ -234,8 +237,7 @@ class CustomModule(AbstractController, threading.Thread):
                 if last_measurement < (self.setpoint - self.hysteresis):
                     self.control.output_off(
                         self.output_device_id,
-                        output_channel=self.output_channel,
-                        )
+                        output_channel=self.output_channel)
             else:
                 # looking to turn output on
                 if last_measurement > (self.setpoint + self.hysteresis):

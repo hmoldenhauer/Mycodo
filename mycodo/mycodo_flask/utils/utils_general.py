@@ -79,6 +79,7 @@ def custom_options_return_string(error, dict_options, mod_dev, request_form):
                 continue
 
             null_value = True
+
             for key in request_form.keys():
                 if each_option['id'] == key:
                     constraints_pass = True
@@ -122,6 +123,8 @@ def custom_options_return_string(error, dict_options, mod_dev, request_form):
                             'select',
                             'select_measurement',
                             'select_measurement_channel',
+                            'select_type_measurement',
+                            'select_type_unit',
                             'select_device']:
                         if 'constraints_pass' in each_option:
                             (constraints_pass,
@@ -130,6 +133,15 @@ def custom_options_return_string(error, dict_options, mod_dev, request_form):
                                 mod_dev, request_form.get(key))
                         if constraints_pass:
                             value = request_form.get(key)
+
+                    elif each_option['type'] == 'select_multi_measurement':
+                        if 'constraints_pass' in each_option:
+                            (constraints_pass,
+                             constraints_errors,
+                             mod_dev) = each_option['constraints_pass'](
+                                mod_dev, request_form.get(key))
+                        if constraints_pass:
+                            value = ",".join(request_form.getlist(key))
 
                     elif each_option['type'] == 'bool':
                         value = bool(request_form.get(key))
@@ -147,7 +159,13 @@ def custom_options_return_string(error, dict_options, mod_dev, request_form):
                             value=value)
                         list_options.append(option)
 
-            if null_value:
+            if (request_form and
+                    each_option['type'] == 'bool' and
+                    each_option['id'] not in request_form.keys()):
+                option = '{id},{value}'.format(id=each_option['id'], value=False)
+                list_options.append(option)
+
+            elif null_value:
                 option = '{id},'.format(id=each_option['id'])
                 list_options.append(option)
 
@@ -229,6 +247,8 @@ def custom_options_return_json(
                                 'select',
                                 'select_measurement',
                                 'select_measurement_channel',
+                                'select_type_measurement',
+                                'select_type_unit',
                                 'select_device']:
                             if 'constraints_pass' in each_option:
                                 (constraints_pass,
@@ -260,7 +280,12 @@ def custom_options_return_json(
                             null_value = False
                             dict_options_return[key] = value
 
-            if null_value:
+            if (request_form and
+                    each_option['type'] == 'bool' and
+                    each_option['id'] not in request_form.keys()):
+                dict_options_return[each_option['id']] = False
+
+            elif null_value:
                 if use_defaults and 'default_value' in each_option:
                     dict_options_return[each_option['id']] = each_option['default_value']
                 elif each_option['type'] == "select_multi_measurement":
@@ -363,6 +388,8 @@ def custom_channel_options_return_json(
                                 'text',
                                 'select_measurement',
                                 'select_measurement_channel',
+                                'select_type_measurement',
+                                'select_type_unit',
                                 'select_device']:
                             if 'constraints_pass' in each_option:
                                 (constraints_pass,
@@ -456,7 +483,7 @@ def controller_activate_deactivate(controller_action,
 
     :param controller_action: Activate or deactivate
     :type controller_action: str
-    :param controller_type: The controller type (Conditional, LCD, Math, PID, Input)
+    :param controller_type: The controller type (Conditional, Input, LCD, Math, PID, Trigger, Function)
     :type controller_type: str
     :param controller_id: Controller with ID to activate or deactivate
     :type controller_id: str
@@ -475,9 +502,7 @@ def controller_activate_deactivate(controller_action,
         "Math": TRANSLATIONS['math']['title'],
         "PID": TRANSLATIONS['pid']['title'],
         "Trigger": TRANSLATIONS['trigger']['title'],
-        "Custom": '{} {}'.format(
-            TRANSLATIONS['custom']['title'],
-            TRANSLATIONS['controller']['title'])
+        "Function": TRANSLATIONS['function']['title']
     }
 
     mod_controller = None
@@ -505,7 +530,7 @@ def controller_activate_deactivate(controller_action,
     elif controller_type == 'Trigger':
         mod_controller = Trigger.query.filter(
             Trigger.unique_id == controller_id).first()
-    elif controller_type == 'Custom':
+    elif controller_type == 'Function':
         mod_controller = CustomController.query.filter(
             CustomController.unique_id == controller_id).first()
 
@@ -589,7 +614,7 @@ def choices_controller_ids():
             name=each_trigger.name)
         choices.append({'value': each_trigger.unique_id, 'item': display})
     for each_custom in CustomController.query.all():
-        display = '[Custom Function {id:02d}] {name}'.format(
+        display = '[Function {id:02d}] {name}'.format(
             id=each_custom.id,
             name=each_custom.name)
         choices.append({'value': each_custom.unique_id, 'item': display})
@@ -602,13 +627,13 @@ def choices_controller_ids():
 
 
 def choices_custom_functions():
-    """ populate form multi-select choices from Input entries """
+    """ populate form multi-select choices from Function entries """
     choices = []
     dict_controllers = parse_function_information()
     list_controllers_sorted = generate_form_controller_list(dict_controllers)
     for each_custom in list_controllers_sorted:
         value = '{inp}'.format(inp=each_custom)
-        display = '{name}'.format(
+        display = 'Function: {name}'.format(
             name=dict_controllers[each_custom]['function_name'])
         choices.append({'value': value, 'item': display})
     return choices
@@ -691,6 +716,15 @@ def choices_maths(maths, dict_units, dict_measurements):
     for each_math in maths:
         choices = form_math_choices(
             choices, each_math, dict_units, dict_measurements)
+    return choices
+
+
+def choices_functions(functions, dict_units, dict_measurements):
+    """ populate form multi-select choices from Math entries """
+    choices = []
+    for each_function in functions:
+        choices = form_function_choices(
+            choices, each_function, dict_units, dict_measurements)
     return choices
 
 
@@ -955,6 +989,51 @@ def form_math_choices(choices, each_math, dict_units, dict_measurements):
             display = '[Math {id:02d}] {i_name} {chan} {meas}'.format(
                 id=each_math.id,
                 i_name=each_math.name,
+                chan=channel_info,
+                meas=measurement_unit)
+            choices.append({'value': value, 'item': display})
+
+    return choices
+
+
+def form_function_choices(choices, each_function, dict_units, dict_measurements):
+    device_measurements = DeviceMeasurements.query.filter(
+        DeviceMeasurements.device_id == each_function.unique_id).all()
+
+    for each_measure in device_measurements:
+        conversion = Conversion.query.filter(
+            Conversion.unique_id == each_measure.conversion_id).first()
+        channel, unit, measurement = return_measurement_info(
+            each_measure, conversion)
+
+        if unit:
+            value = '{input_id},{meas_id}'.format(
+                input_id=each_function.unique_id,
+                meas_id=each_measure.unique_id)
+
+            display_unit = find_name_unit(
+                dict_units, unit)
+            display_measurement = find_name_measurement(
+                dict_measurements, measurement)
+
+            if each_measure.name:
+                channel_info = 'CH{cnum} ({cname})'.format(
+                    cnum=channel, cname=each_measure.name)
+            else:
+                channel_info = 'CH{cnum}'.format(cnum=channel)
+
+            if display_measurement and display_unit:
+                measurement_unit = '{meas} ({unit})'.format(
+                    meas=display_measurement, unit=display_unit)
+            elif display_measurement:
+                measurement_unit = '{meas}'.format(
+                    meas=display_measurement)
+            else:
+                measurement_unit = '({unit})'.format(unit=display_unit)
+
+            display = '[Function {id:02d}] {i_name} {chan} {meas}'.format(
+                id=each_function.id,
+                i_name=each_function.name,
                 chan=channel_info,
                 meas=measurement_unit)
             choices.append({'value': value, 'item': display})
@@ -1344,14 +1423,13 @@ def flash_form_errors(form):
 def flash_success_errors(error, action, redirect_url):
     if error:
         for each_error in error:
-            flash(gettext("%(msg)s",
-                          msg='{action}: {err}'.format(
-                              action=action, err=each_error)),
-                  "error")
+            flash(
+                gettext("%(msg)s", msg='{action}: {err}'.format(
+                    action=action, err=each_error)),
+                "error")
         return redirect(redirect_url)
     else:
-        flash(gettext("%(msg)s", msg=action),
-              "success")
+        flash(gettext("%(msg)s", msg=action), "success")
 
 
 def add_display_order(display_order, device_id):
@@ -1570,13 +1648,13 @@ def return_dependencies(device_type):
     return unmet_deps, met_deps
 
 
-def use_unit_generate(device_measurements, input_dev, output, math):
+def use_unit_generate(device_measurements, input_dev, output, math, function):
     """Generate dictionary of units to convert to"""
     use_unit = {}
 
     # Input and Math controllers have measurement tables with the same schema
     list_devices_with_measurements = [
-        input_dev, math
+        input_dev, math, function
     ]
 
     for devices in list_devices_with_measurements:
@@ -1712,4 +1790,4 @@ def custom_action(controller, dict_device, unique_id, form):
     except Exception as except_msg:
         logger.exception(1)
         error.append(except_msg)
-    flash_success_errors(error, action, url_for('routes_page.page_data'))
+    flash_success_errors(error, action, url_for('routes_page.page_input'))

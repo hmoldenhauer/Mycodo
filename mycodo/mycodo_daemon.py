@@ -77,10 +77,10 @@ from mycodo.utils.function_actions import trigger_action
 from mycodo.utils.function_actions import trigger_function_actions
 from mycodo.utils.github_release_info import MycodoRelease
 from mycodo.utils.modules import load_module_from_file
-from mycodo.utils.statistics import add_update_csv
-from mycodo.utils.statistics import recreate_stat_file
-from mycodo.utils.statistics import return_stat_file_dict
-from mycodo.utils.statistics import send_anonymous_stats
+from mycodo.utils.stats import add_update_csv
+from mycodo.utils.stats import recreate_stat_file
+from mycodo.utils.stats import return_stat_file_dict
+from mycodo.utils.stats import send_anonymous_stats
 from mycodo.utils.tools import generate_output_usage_report
 from mycodo.utils.tools import next_schedule
 
@@ -113,7 +113,7 @@ class DaemonController:
             'Math': {},
             'PID': {},
             'Trigger': {},
-            'Custom': {}
+            'Function': {}
         }
 
         # Controllers that may launch multiple threads
@@ -125,7 +125,7 @@ class DaemonController:
             'Math',
             'PID',
             'LCD',
-            'Custom'
+            'Function'
         ]
 
         # Dashboard widgets
@@ -231,13 +231,11 @@ class DaemonController:
             'Math': db_retrieve_table_daemon(Math, unique_id=unique_id),
             'PID': db_retrieve_table_daemon(PID, unique_id=unique_id),
             'Trigger': db_retrieve_table_daemon(Trigger, unique_id=unique_id),
-            'Custom': db_retrieve_table_daemon(CustomController, unique_id=unique_id)
+            'Function': db_retrieve_table_daemon(CustomController, unique_id=unique_id)
         }
-        controller_type = None
         for each_type in db_tables:
             if db_tables[each_type]:
-                controller_type = each_type
-        return controller_type
+                return each_type
 
     def controller_activate(self, cont_id):
         """
@@ -280,7 +278,7 @@ class DaemonController:
             elif cont_type == 'Trigger':
                 controller_manage['type'] = Trigger
                 controller_manage['function'] = TriggerController
-            elif cont_type == 'Custom':
+            elif cont_type == 'Function':
                 controller_manage['type'] = CustomController
 
                 custom_function = db_retrieve_table_daemon(controller_manage['type'], unique_id=cont_id)
@@ -415,9 +413,9 @@ class DaemonController:
             for trigger_id in self.controller['Trigger']:
                 if not self.controller['Trigger'][trigger_id].is_running():
                     return "Error: Trigger ID {}".format(trigger_id)
-            for controller_id in self.controller['Custom']:
-                if not self.controller['Custom'][controller_id].is_running():
-                    return "Error: Custom ID {}".format(controller_id)
+            for controller_id in self.controller['Function']:
+                if not self.controller['Function'][controller_id].is_running():
+                    return "Error: Function ID {}".format(controller_id)
             if not self.controller['Output'].is_running():
                 return "Error: Output controller"
             if not self.controller['Widget'].is_running():
@@ -838,7 +836,7 @@ class DaemonController:
                 'Math': db_retrieve_table_daemon(Math, entry='all'),
                 'PID': db_retrieve_table_daemon(PID, entry='all'),
                 'Trigger': db_retrieve_table_daemon(Trigger, entry='all'),
-                'Custom': db_retrieve_table_daemon(CustomController, entry='all')
+                'Function': db_retrieve_table_daemon(CustomController, entry='all')
             }
 
             self.logger.debug("Starting Output Controller")
@@ -925,15 +923,6 @@ class DaemonController:
             self.controller['Widget'].join(15)  # Give each thread 15 seconds to stop
         except Exception as err:
             self.logger.info("Widget controller had an issue stopping: {err}".format(err=err))
-
-    def send_infrared_code_broadcast(self, code):
-        """Broadcast IR code to all active IR Triggers (thread for speed)"""
-        for each_trigger_id in self.controller['Trigger']:
-            if self.controller['Trigger'][each_trigger_id].trigger_type == 'trigger_infrared_remote_input':
-                broadcast_ir = threading.Thread(
-                    target=self.controller['Trigger'][each_trigger_id].receive_infrared_code_broadcast,
-                    args=(code,))
-                broadcast_ir.start()
 
     def trigger_action(self, action_id, message='', single_action=False, debug=False):
         try:
@@ -1205,10 +1194,6 @@ class PyroServer(object):
     def output_setup(self, action, output_id):
         """Add, delete, or modify a output in the running output controller"""
         return self.mycodo.output_setup(action, output_id)
-
-    def send_infrared_code_broadcast(self, code):
-        """Broadcast infrared code to all IR Triggers"""
-        return self.mycodo.send_infrared_code_broadcast(code)
 
     def trigger_action(self, action_id, message='', single_action=False, debug=False):
         """Trigger action"""

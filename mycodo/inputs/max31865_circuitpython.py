@@ -51,11 +51,11 @@ INPUT_INFORMATION = {
         {
             'id': 'wires',
             'type': 'select',
-            'default_value': 2,
+            'default_value': '2',
             'options_select': [
-                (2, '2 Wires'),
-                (3, '3 Wires'),
-                (4, '4 Wires')
+                ('2', '2 Wires'),
+                ('3', '3 Wires'),
+                ('4', '4 Wires')
             ],
             'name': 'Number of wires',
             'phrase': 'Select the number of wires your thermocouple has.'
@@ -84,10 +84,9 @@ class InputModule(AbstractInput):
         self.ref_ohm = None
         self.rtd_nominal = None
 
-        self.setup_custom_options(
-            INPUT_INFORMATION['custom_options'], input_dev)
-
         if not testing:
+            self.setup_custom_options(
+                INPUT_INFORMATION['custom_options'], input_dev)
             self.initialize_input()
 
     def initialize_input(self):

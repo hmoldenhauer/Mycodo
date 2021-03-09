@@ -19,11 +19,14 @@ from mycodo.databases.models import CustomController
 from mycodo.databases.models import DeviceMeasurements
 from mycodo.databases.models import DisplayOrder
 from mycodo.databases.models import Function
+from mycodo.databases.models import FunctionChannel
 from mycodo.databases.models import PID
 from mycodo.databases.models import Trigger
 from mycodo.mycodo_client import DaemonControl
 from mycodo.mycodo_flask.extensions import db
 from mycodo.mycodo_flask.utils.utils_general import add_display_order
+from mycodo.mycodo_flask.utils.utils_general import custom_channel_options_return_json
+from mycodo.mycodo_flask.utils.utils_general import custom_options_return_json
 from mycodo.mycodo_flask.utils.utils_general import delete_entry_with_id
 from mycodo.mycodo_flask.utils.utils_general import flash_success_errors
 from mycodo.mycodo_flask.utils.utils_general import reorder
@@ -126,7 +129,6 @@ if measurement is not None:  # If a measurement exists
                                'trigger_timer_daily_time_point',
                                'trigger_timer_daily_time_span',
                                'trigger_timer_duration',
-                               'trigger_infrared_remote_input',
                                'trigger_run_pwm_method',
                                'trigger_sunrise_sunset']:
             new_func = Trigger()
@@ -154,22 +156,11 @@ if measurement is not None:  # If a measurement exists
             else:
                 new_func.name = 'Function Name'
 
-            # TODO: Switch to JSON function
-            list_options = []
-            if 'custom_options' in dict_controllers[function_name]:
-                for each_option in dict_controllers[function_name]['custom_options']:
-                    if 'id' not in each_option:
-                        continue
+            # Generate string to save from custom options
+            error, custom_options = custom_options_return_json(
+                error, dict_controllers, device=function_name, use_defaults=True)
+            new_func.custom_options = custom_options
 
-                    if each_option['default_value'] is False:
-                        default_value = ''
-                    else:
-                        default_value = each_option['default_value']
-                    option = '{id},{value}'.format(
-                        id=each_option['id'],
-                        value=default_value)
-                    list_options.append(option)
-            new_func.custom_options = ';'.join(list_options)
             if not error:
                 new_func.save()
 
@@ -186,11 +177,72 @@ if measurement is not None:  # If a measurement exists
                 display_order, new_func.unique_id)
             db.session.commit()
 
+            if function_name in dict_controllers:
+                #
+                # Add measurements defined in the Function Module
+                #
+
+                if ('measurements_dict' in dict_controllers[function_name] and
+                        dict_controllers[function_name]['measurements_dict']):
+                    for each_channel in dict_controllers[function_name]['measurements_dict']:
+                        measure_info = dict_controllers[function_name]['measurements_dict'][each_channel]
+                        new_measurement = DeviceMeasurements()
+                        new_measurement.device_id = new_func.unique_id
+                        if 'name' in measure_info:
+                            new_measurement.name = measure_info['name']
+                        else:
+                            new_measurement.name = ""
+                        if 'measurement' in measure_info:
+                            new_measurement.measurement = measure_info['measurement']
+                        else:
+                            new_measurement.measurement = ""
+                        if 'unit' in measure_info:
+                            new_measurement.unit = measure_info['unit']
+                        else:
+                            new_measurement.unit = ""
+                        new_measurement.channel = each_channel
+                        new_measurement.save()
+
+                #
+                # If there are a variable number of measurements
+                #
+
+                elif ('measurements_variable_amount' in dict_controllers[function_name] and
+                        dict_controllers[function_name]['measurements_variable_amount']):
+                    # Add first default measurement with empty unit and measurement
+                    new_measurement = DeviceMeasurements()
+                    new_measurement.name = ""
+                    new_measurement.device_id = new_func.unique_id
+                    new_measurement.measurement = ""
+                    new_measurement.unit = ""
+                    new_measurement.channel = 0
+                    new_measurement.save()
+
+                #
+                # Add channels defined in the Function Module
+                #
+
+                if 'channels_dict' in dict_controllers[function_name]:
+                    for each_channel, channel_info in dict_controllers[function_name]['channels_dict'].items():
+                        new_channel = FunctionChannel()
+                        new_channel.channel = each_channel
+                        new_channel.function_id = new_func.unique_id
+
+                        # Generate string to save from custom options
+                        error, custom_options = custom_channel_options_return_json(
+                            error, dict_controllers, None,
+                            new_func.unique_id, each_channel,
+                            device=new_func.device, use_defaults=True)
+                        new_channel.custom_options = custom_options
+
+                        new_channel.save()
+
     except sqlalchemy.exc.OperationalError as except_msg:
         error.append(except_msg)
     except sqlalchemy.exc.IntegrityError as except_msg:
         error.append(except_msg)
     except Exception as except_msg:
+        logger.exception("Add Function")
         error.append(except_msg)
 
     flash_success_errors(error, action, url_for('routes_page.page_function'))
@@ -238,8 +290,12 @@ def function_del(function_id):
         actions = Actions.query.filter(
             Actions.function_id == function_id).all()
         for each_action in actions:
-            delete_entry_with_id(Actions,
-                                 each_action.unique_id)
+            delete_entry_with_id(Actions, each_action.unique_id)
+
+        device_measurements = DeviceMeasurements.query.filter(
+            DeviceMeasurements.device_id == function_id).all()
+        for each_measurement in device_measurements:
+            delete_entry_with_id(DeviceMeasurements, each_measurement.unique_id)
 
         delete_entry_with_id(Function, function_id)
 
@@ -378,11 +434,6 @@ def action_mod(form):
         elif mod_action.action_type == 'method_pid':
             mod_action.do_unique_id = form.do_unique_id.data
             mod_action.do_action_string = form.do_action_string.data
-
-        elif mod_action.action_type == 'infrared_send':
-            mod_action.remote = form.remote.data
-            mod_action.code = form.code.data
-            mod_action.send_times = form.send_times.data
 
         elif mod_action.action_type in ['email',
                                         'email_multiple']:
@@ -571,9 +622,6 @@ def check_form_actions(form, error):
                                 'pause_pid']:
         if not form.do_unique_id.data or form.do_unique_id.data == '':
             error.append("ID must be set")
-    elif action.action_type == 'infrared_send':
-        if not form.remote.data:
-            error.append("Remote must be set")
     elif action.action_type == 'email':
         if not form.do_action_string.data or form.do_action_string.data == '':
             error.append("Email must be set")
@@ -634,9 +682,6 @@ def check_actions(action, error):
                                 'deactivate_pid']:
         if not action.do_unique_id or action.do_unique_id == '':
             error.append("PID must be set")
-    elif action.action_type == 'infrared_send':
-        if not action.remote or not action.code:
-            error.append("Remote and Code must be set")
     elif action.action_type == 'email':
         if not action.do_action_string or action.do_action_string == '':
             error.append("Email must be set")

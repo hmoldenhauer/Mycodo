@@ -38,7 +38,7 @@ INPUT_INFORMATION = {
     'input_name_unique': 'ADS1115_CP',
     'input_manufacturer': 'Texas Instruments',
     'input_name': 'ADS1115',
-    'input_library': 'Adafruit_CircuitPython',
+    'input_library': 'Adafruit_CircuitPython_ADS1x15',
     'measurements_name': 'Voltage (Analog-to-Digital Converter)',
     'measurements_dict': measurements_dict,
     'measurements_rescale': True,
@@ -115,10 +115,10 @@ class InputModule(AbstractInput):
         }
 
         self.measurements_for_average = None
-        self.setup_custom_options(
-            INPUT_INFORMATION['custom_options'], input_dev)
 
         if not testing:
+            self.setup_custom_options(
+                INPUT_INFORMATION['custom_options'], input_dev)
             self.initialize_input()
 
     def initialize_input(self):
