@@ -1,3 +1,13 @@
+## 8.9.1 (2021-03-13)
+
+### Bugfixes
+
+ - Fix API deactivating controller in database ([#944](https://github.com/kizniche/mycodo/issues/944))
+ - Fix invalid conversion ([#947](https://github.com/kizniche/mycodo/issues/947))
+ - Fix inability to save MQTT Input ([#946](https://github.com/kizniche/mycodo/issues/946))
+ - Fix Camera Widget ([#948](https://github.com/kizniche/mycodo/issues/948))
+
+
 ## 8.9.0 (2021-03-08)
 
 This release contains bug fixes and several new types of Inputs and Outputs. These include stepper motors, digital-to-analog converters, a multi-channel PWM output, as well as an input to acquire current and future weather conditions.
