@@ -101,6 +101,9 @@ class SetupDS18B20(FlaskForm):
 # Sensirion SCD30 CO2, Humidity and Temperature Sensor
 class SetupSCD30(FlaskForm):
     hidden_input_id = StringField('Input ID', widget=widgets.HiddenInput())
-    calibrate_temperature = SubmitField(lazy_gettext('Calibrate Temperature'))
     ambient_temperature = DecimalField(
-        lazy_gettext('Ambient Reference Temperature'), widget=NumberInput(step=0.1))
+        lazy_gettext('Ambient Reference Temperature'), widget=NumberInput(step=0.01))
+    calibrate_temperature = SubmitField(lazy_gettext('Calibrate Temperature'))
+    start_calibration = SubmitField(lazy_gettext('Begin CO2 Calibration'))
+    stop_calibration = SubmitField(lazy_gettext('Stop CO2 Calibration'))
+    reset_temp_offset = SubmitField(lazy_gettext('Reset Temperature Calibration'))

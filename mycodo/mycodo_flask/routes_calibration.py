@@ -705,29 +705,48 @@ def setup_scd30():
     selected_input = None
     input_device_name = None
     complete_with_error = None
-    co2_ppm = 0
-    temp_celsius = 0
-    rh_percent = 0
 
     from scd30_i2c import SCD30
     scd30 = SCD30()
-    co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
+    co2_cal = scd30.get_auto_self_calibration_active()
+    if scd30.get_data_ready() is False:
+        time.sleep(0.2)
+    _, temp_celsius, _ = scd30.read_measurement()
     t_off = scd30.get_temperature_offset()
+
+    if form_scd30.start_calibration.data:
+        scd30.set_auto_self_calibration(active=True)
+        co2_cal = scd30.get_auto_self_calibration_active()
+
+    if form_scd30.stop_calibration.data:
+        scd30.set_auto_self_calibration(active=False)
+        co2_cal = scd30.get_auto_self_calibration_active()
+
+    if co2_cal:
+        co2_cal = "On"
+    else:
+        co2_cal = "Off"
+
+    # Reset Temperature Calibration
+    if form_scd30.reset_temp_offset.data:
+        scd30.set_temperature_offset(0)
+        t_off = 0.
+        flash("Successfully chaged offset temperature to 0 °C",
+              "success"
+             )
 
     # Begin calibration from selected input
     if form_scd30.calibrate_temperature.data:
         t_off_old = scd30.get_temperature_offset()
-        t_off_new = temp_celsius - float(form_scd30.ambient_temperature.data)
-        co2_ppm, temp_celsius, rh_percent = scd30.read_measurement()
-        t_off = scd30.get_temperature_offset()
-        scd30.set_temperature_offset(round(0, 1))
+        t_off = temp_celsius - float(form_scd30.ambient_temperature.data)
+        scd30.set_temperature_offset(t_off)
 
         flash(f"Successfully changed offest temperature from {round(t_off_old, 2)}°C"
-              f"to {round(t_off_new, 2)}°C",
+              f"to {round(t_off, 2)}°C",
               "success"
              )
 
-        ui_stage = 'complete'
+        #ui_stage = 'complete'
 
     return render_template('tools/calibration_options/scd30.html',
                            complete_with_error=complete_with_error,
@@ -737,7 +756,8 @@ def setup_scd30():
                            selected_input=selected_input,
                            ui_stage=ui_stage,
                            temperature_scd30=temp_celsius,
-                           temperature_offset=t_off)
+                           temperature_offset=t_off,
+                           calibrate_co2=co2_cal)
 #
 # Functions
 #
