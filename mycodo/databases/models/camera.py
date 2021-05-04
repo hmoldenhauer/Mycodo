@@ -17,12 +17,12 @@ class Camera(CRUDMixin, db.Model):
     hflip = db.Column(db.Boolean, default=False)  # Horizontal flip image
     vflip = db.Column(db.Boolean, default=False)  # Vertical flip image
     rotation = db.Column(db.Integer, default=0)  # Rotation degree (0-360)
-    brightness = db.Column(db.Float, default=None)
-    contrast = db.Column(db.Float, default=None)
+    brightness = db.Column(db.Float, default=0)
+    contrast = db.Column(db.Float, default=0)
     exposure = db.Column(db.Float, default=None)
     gain = db.Column(db.Float, default=None)
     hue = db.Column(db.Float, default=None)
-    saturation = db.Column(db.Float, default=0.3)
+    saturation = db.Column(db.Float, default=0)
     white_balance = db.Column(db.Float, default=0.0)
     custom_options = db.Column(db.Text, default='')
     output_id = db.Column(db.String, db.ForeignKey('output.unique_id'), default=None)  # Turn output on during capture
@@ -49,11 +49,12 @@ class Camera(CRUDMixin, db.Model):
     path_timelapse = db.Column(db.Text, default='')
     path_video = db.Column(db.Text, default='')
 
-    # Resolutions
+    # Resolutions and stream
     width = db.Column(db.Integer, default=1024)
     height = db.Column(db.Integer, default=768)
     resolution_stream_width = db.Column(db.Integer, default=1024)
     resolution_stream_height = db.Column(db.Integer, default=768)
+    stream_fps = db.Column(db.Integer, default=5)
 
     # picamera options
     picamera_shutter_speed = db.Column(db.Integer, default=0)
